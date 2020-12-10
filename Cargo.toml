@@ -1,0 +1,16 @@
+[package]
+name = "webauth"
+version = "0.1.0"
+authors = ["Lewin Probst <info@emirror.de>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+modcol = { version ="0.1.1", git = "ssh://git@synumsyy.local/emirror-de/modcol" }
+serde = { version = "1.0.118", features = ["derive"]}
+jsonwebtoken = "7.2.0"
+rocket = "0.4.6"
+dotenv = "0.15.0"
+chrono = "0.4.19"
+enum_derive = "0.1.7"
