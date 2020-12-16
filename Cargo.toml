@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-modcol = { version ="0.1.1", git = "ssh://git@synumsyy.local/emirror-de/modcol" }
+modcol = { branch ="master", git = "ssh://git@synumsyy.local/emirror-de/modcol" }
 serde = { version = "1.0.118", features = ["derive"]}
 jsonwebtoken = "7.2.0"
 rocket = "0.4.6"

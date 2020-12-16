@@ -3,6 +3,10 @@ use {
     std::env,
 };
 
+pub use {
+    user_claims::UserClaims,
+};
+
 mod user_claims;
 mod rocket;
 

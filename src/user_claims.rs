@@ -1,13 +1,11 @@
 use {
     chrono::{Duration, Utc},
-    core::str::FromStr,
     jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation},
     modcol::prelude::{
         User,
         Model,
     },
     serde::{Deserialize, Serialize},
-    std::fmt::Display,
 };
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -17,7 +15,7 @@ pub struct UserClaims {
 }
 
 impl UserClaims {
-    pub fn new(user: User, valid: Option<Duration>) -> Self {
+    pub fn new(user: &User, valid: Option<Duration>) -> Self {
         let exp = Utc::now();
         let valid = match valid {
             None => Duration::weeks(1),
@@ -25,7 +23,7 @@ impl UserClaims {
         };
         let exp = exp + valid;
         Self {
-            user,
+            user: user.clone(),
             exp: exp.timestamp() as usize,
         }
     }
@@ -42,9 +40,8 @@ impl UserClaims {
         self.user.username.clone()
     }
 
-    pub fn get_service<T>(&self) -> Result<T, enum_derive::ParseEnumError>
-        where T: Display + FromStr {
-        self.user.get_service::<T>()
+    pub fn get_service(&self) -> String {
+        self.user.get_service()
     }
 
     pub fn encode(&self, secret: String)
