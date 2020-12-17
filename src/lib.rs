@@ -5,6 +5,7 @@ use {
 
 pub use {
     user_claims::UserClaims,
+    jsonwebtoken,
 };
 
 mod user_claims;
