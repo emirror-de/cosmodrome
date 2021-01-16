@@ -39,8 +39,8 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserClaims {
             //    );
         }
         let user = UserClaims::decode(
-            auth.unwrap().value().to_string(),
-            secret
+            auth.unwrap().value(),
+            &secret
             );
         if let Err(_) = &user {
             return Outcome::Forward(());

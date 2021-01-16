@@ -44,7 +44,7 @@ impl UserClaims {
         self.user.get_service()
     }
 
-    pub fn encode(&self, secret: String)
+    pub fn encode(&self, secret: &str)
         -> Result<String, jsonwebtoken::errors::Error> {
         let web_token = jsonwebtoken::encode(
             &Header::default(),
@@ -54,7 +54,7 @@ impl UserClaims {
         Ok(web_token)
     }
 
-    pub fn decode(token: String, secret: String)
+    pub fn decode(token: &str, secret: &str)
         -> Result<Self, jsonwebtoken::errors::Error> {
         let claims = jsonwebtoken::decode::<UserClaims>(
             &token,
