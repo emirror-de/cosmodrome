@@ -1,47 +1,51 @@
-use {
-    chrono::{Duration, Utc},
-    jsonwebtoken::{DecodingKey, EncodingKey, Header, Validation},
-    naphtha::{models::account::Account, Model},
-    serde::{Deserialize, Serialize},
+use crate::account::Account;
+use anyhow::anyhow;
+use chrono::{
+    TimeDelta,
+    Utc,
+};
+use jsonwebtoken::{
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation,
+};
+use rocket::serde::{
+    Deserialize,
+    Serialize,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "rocket::serde")]
 pub struct AccountClaims {
     user: Account,
     exp: usize,
 }
 
 impl AccountClaims {
-    pub fn new(user: &Account, valid: Option<Duration>) -> Self {
+    pub fn new(user: &Account) -> anyhow::Result<Self> {
         let exp = Utc::now();
-        let valid = match valid {
-            None => Duration::weeks(1),
-            Some(v) => v,
-        };
+        let valid =
+            TimeDelta::try_weeks(1).ok_or(anyhow!("TimeDelta overflow."))?;
         let exp = exp + valid;
-        Self {
+        Ok(Self {
             user: user.clone(),
             exp: exp.timestamp() as usize,
-        }
+        })
     }
 
-    pub fn get_id(&self) -> i32 {
-        self.user.get_id()
-    }
-
-    pub fn get_email(&self) -> String {
-        self.user.email.clone()
-    }
-
-    pub fn get_username(&self) -> String {
-        self.user.username.clone()
+    pub fn get_id(&self) -> String {
+        self.user.id.clone()
     }
 
     pub fn get_service(&self) -> String {
         self.user.get_service()
     }
 
-    pub fn encode(&self, secret: &str) -> Result<String, jsonwebtoken::errors::Error> {
+    pub fn encode(
+        &self,
+        secret: &str,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
         let web_token = jsonwebtoken::encode(
             &Header::default(),
             self,
@@ -50,7 +54,10 @@ impl AccountClaims {
         Ok(web_token)
     }
 
-    pub fn decode(token: &str, secret: &str) -> Result<Self, jsonwebtoken::errors::Error> {
+    pub fn decode(
+        token: &str,
+        secret: &str,
+    ) -> Result<Self, jsonwebtoken::errors::Error> {
         let claims = jsonwebtoken::decode::<AccountClaims>(
             &token,
             &DecodingKey::from_secret(secret.as_bytes()),

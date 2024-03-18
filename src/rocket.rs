@@ -1,50 +1,45 @@
-use {
-    crate::account_claims::AccountClaims,
-    rocket::{
-        request::{self, FromRequest, Request},
+use crate::{
+    account_claims::AccountClaims,
+    AuthSettings,
+};
+use anyhow::anyhow;
+use rocket::{
+    http::Status,
+    request::{
+        FromRequest,
         Outcome,
+        Request,
     },
 };
 
-impl<'a, 'r> FromRequest<'a, 'r> for AccountClaims {
-    type Error = String;
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for AccountClaims {
+    type Error = anyhow::Error;
 
-    fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
-        let secret = match crate::get_authentication_secret() {
-            Err(_) => {
-                return Outcome::Forward(());
-                //return Outcome::Failure(
-                //    (Status::Unauthorized, "Internal server error!".to_string())
-                //    );
-            }
-            Ok(v) => v,
+    async fn from_request(
+        request: &'r Request<'_>,
+    ) -> Outcome<Self, Self::Error> {
+        let Some(settings) = request.rocket().state::<AuthSettings>() else {
+            return Outcome::Forward(Status::InternalServerError);
         };
-        let auth_cookie_name = match crate::get_cookie_name() {
-            Err(_) => {
-                return Outcome::Forward(());
-                //return Outcome::Failure(
-                //    (Status::Unauthorized, "Internal server error!".to_string())
-                //    );
-            }
-            Ok(v) => v,
-        };
-
         let cookies = request.cookies();
 
-        let auth = cookies.get(&auth_cookie_name);
-        if let None = &auth {
-            return Outcome::Forward(());
-            //return Outcome::Failure(
-            //    (Status::Unauthorized, "Cookie not found!".to_string())
-            //    );
+        let auth = cookies.get(settings.cookie_name());
+        let Some(auth) = &auth else {
+            return Outcome::Error((
+                Status::Unauthorized,
+                anyhow!("No auth cookie available."),
+            ));
+        };
+        let user = AccountClaims::decode(
+            auth.value(),
+            settings.authentication_secret(),
+        );
+        match user {
+            Err(e) => {
+                return Outcome::Error((Status::Unauthorized, anyhow!("{e}")));
+            }
+            Ok(u) => Outcome::Success(u),
         }
-        let user = AccountClaims::decode(auth.unwrap().value(), &secret);
-        if let Err(_) = &user {
-            return Outcome::Forward(());
-            //return Outcome::Failure(
-            //    (Status::Unauthorized, msg.to_string())
-            //    );
-        }
-        Outcome::Success(user.unwrap())
     }
 }

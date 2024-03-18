@@ -1,19 +1,34 @@
-use {dotenv::dotenv, std::env};
+pub use account_claims::AccountClaims;
+pub use jsonwebtoken;
 
-pub use {account_claims::AccountClaims, jsonwebtoken};
-
+pub mod account;
 mod account_claims;
 mod rocket;
 
-const ENV_COOKIE_NAME: &str = "WEBAUTH_COOKIE_NAME";
-const ENV_AUTHENTICATION_SECRET: &str = "WEBAUTH_AUTHENTICATION_SECRET";
-
-pub fn get_authentication_secret() -> Result<String, std::env::VarError> {
-    dotenv().ok();
-    env::var(crate::ENV_AUTHENTICATION_SECRET)
+/// Global settings required to run the web auth implementation.
+pub struct AuthSettings {
+    /// The cookie name where the [AccountClaims](account_claims::AccountClaims) should be stored.
+    cookie_name: String,
+    /// The authentication secret used to
+    authentication_secret: String,
 }
 
-pub fn get_cookie_name() -> Result<String, std::env::VarError> {
-    dotenv().ok();
-    env::var(crate::ENV_COOKIE_NAME)
+impl AuthSettings {
+    /// Creates a new settings instance.
+    pub fn new(cookie_name: &str, authentication_secret: &str) -> Self {
+        Self {
+            cookie_name: cookie_name.to_string(),
+            authentication_secret: authentication_secret.to_string(),
+        }
+    }
+
+    /// Returns the authentication secret that is used to de-/encode the [jsonwebtoken].
+    pub fn authentication_secret(&self) -> &str {
+        &self.authentication_secret
+    }
+
+    /// Returns the cookie name that is used to store the [jsonwebtoken].
+    pub fn cookie_name(&self) -> &str {
+        &self.cookie_name
+    }
 }

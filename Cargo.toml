@@ -1,14 +1,13 @@
 [package]
-name = "webauth"
-version = "0.1.0"
+name = "rocket-webauth"
+version = "0.2.0-dev"
 authors = ["Lewin Probst <info@emirror.de>"]
 edition = "2021"
 
 [dependencies]
-naphtha = { path = "../modcol/naphtha", features = ["database"] }
-serde = { version = "^1.0.118", features = ["derive"]}
+anyhow = "1"
 jsonwebtoken = "7.2.0"
-rocket = "0.4.6"
+rocket = "0.5"
 dotenv = "0.15.0"
-chrono = "^0.4.19"
-enum_derive = "0.1.7"
+chrono = { version = "0.4", features = ["serde"] }
+argon2 = "0.5.3"
