@@ -1,0 +1,5 @@
+max_width = 80
+format_strings = true
+imports_layout = "Vertical"
+imports_granularity="Crate"
+reorder_imports = true
