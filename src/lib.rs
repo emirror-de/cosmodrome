@@ -1,14 +1,8 @@
-use {
-    dotenv::dotenv,
-    std::env,
-};
+use {dotenv::dotenv, std::env};
 
-pub use {
-    user_claims::UserClaims,
-    jsonwebtoken,
-};
+pub use {account_claims::AccountClaims, jsonwebtoken};
 
-mod user_claims;
+mod account_claims;
 mod rocket;
 
 const ENV_COOKIE_NAME: &str = "WEBAUTH_COOKIE_NAME";

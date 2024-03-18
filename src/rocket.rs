@@ -1,12 +1,12 @@
 use {
-    crate::user_claims::UserClaims,
+    crate::account_claims::AccountClaims,
     rocket::{
+        request::{self, FromRequest, Request},
         Outcome,
-        request::{self, Request, FromRequest},
     },
 };
 
-impl<'a, 'r> FromRequest<'a, 'r> for UserClaims {
+impl<'a, 'r> FromRequest<'a, 'r> for AccountClaims {
     type Error = String;
 
     fn from_request(request: &'a Request<'r>) -> request::Outcome<Self, Self::Error> {
@@ -16,7 +16,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserClaims {
                 //return Outcome::Failure(
                 //    (Status::Unauthorized, "Internal server error!".to_string())
                 //    );
-            },
+            }
             Ok(v) => v,
         };
         let auth_cookie_name = match crate::get_cookie_name() {
@@ -25,7 +25,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserClaims {
                 //return Outcome::Failure(
                 //    (Status::Unauthorized, "Internal server error!".to_string())
                 //    );
-            },
+            }
             Ok(v) => v,
         };
 
@@ -38,10 +38,7 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserClaims {
             //    (Status::Unauthorized, "Cookie not found!".to_string())
             //    );
         }
-        let user = UserClaims::decode(
-            auth.unwrap().value(),
-            &secret
-            );
+        let user = AccountClaims::decode(auth.unwrap().value(), &secret);
         if let Err(_) = &user {
             return Outcome::Forward(());
             //return Outcome::Failure(
