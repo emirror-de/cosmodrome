@@ -3,7 +3,7 @@ use rocket::serde::{
     Serialize,
 };
 
-/// Indicates the type of an account. Sometimes known as a role.
+/// Indicates the access level of an account.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub enum AccountType {

@@ -21,7 +21,7 @@ use rocket::serde::{
 };
 
 /// Defines a user account of a service.
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Account {
     /// The unique id of the account. This can be for example the username or email.
@@ -44,15 +44,15 @@ pub struct Account {
 impl Account {
     /// Creates a new user account with [Account::disabled] and [Account::confirmed] set to `false`.
     pub fn new(
-        id: String,
-        password: String,
-        service: String,
+        id: &str,
+        password: &str,
+        service: &str,
         account_type: AccountType,
     ) -> anyhow::Result<Self> {
         Ok(Self {
-            id,
-            password: Self::hash_password(password)?,
-            service: service,
+            id: id.to_string(),
+            password: Self::hash_password(&password)?,
+            service: service.to_string(),
             account_type,
             disabled: false,  // always activate
             confirmed: false, // always require user to confirm it
@@ -69,8 +69,8 @@ impl Account {
     /// Does NOT automatically call the ```update``` function to update the database.
     pub fn change_password(
         &mut self,
-        old_password: String,
-        new_password: String,
+        old_password: &str,
+        new_password: &str,
     ) -> anyhow::Result<()> {
         if self.verify_password(old_password)? {
             self.password = Self::hash_password(new_password)?;
@@ -81,7 +81,7 @@ impl Account {
     }
 
     /// Checks if the given password is correct.
-    pub fn verify_password(&self, password: String) -> anyhow::Result<bool> {
+    pub fn verify_password(&self, password: &str) -> anyhow::Result<bool> {
         let hash = PasswordHash::parse(&self.password, Encoding::B64)
             .map_err(|e| anyhow!("{e}"))?;
         Ok(Argon2::default()
@@ -90,7 +90,7 @@ impl Account {
     }
 
     /// Hashes the password using `[argon2]`.
-    fn hash_password(password: String) -> anyhow::Result<String> {
+    fn hash_password(password: &str) -> anyhow::Result<String> {
         let salt = SaltString::generate(&mut OsRng);
         let argon2 = Argon2::default();
         Ok(argon2

@@ -1,4 +1,7 @@
-use crate::account::Account;
+use crate::{
+    account::Account,
+    AuthSettings,
+};
 use anyhow::anyhow;
 use chrono::{
     TimeDelta,
@@ -10,19 +13,30 @@ use jsonwebtoken::{
     Header,
     Validation,
 };
-use rocket::serde::{
-    Deserialize,
-    Serialize,
+use rocket::{
+    http::Status,
+    request::{
+        FromRequest,
+        Outcome,
+        Request,
+    },
+    serde::{
+        Deserialize,
+        Serialize,
+    },
 };
 
-#[derive(Serialize, Deserialize)]
+/// The claims that are stored in the [`jsonwebtoken`].
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct AccountClaims {
-    user: Account,
+    pub user: Account,
     exp: usize,
 }
 
 impl AccountClaims {
+    /// Creates a new claim for the given account with a validity of one week.
+    /// Use [with_validity](Self::with_validity) for adjustment of the valid timespan.
     pub fn new(user: &Account) -> anyhow::Result<Self> {
         let exp = Utc::now();
         let valid =
@@ -34,12 +48,18 @@ impl AccountClaims {
         })
     }
 
-    pub fn get_id(&self) -> String {
-        self.user.id.clone()
+    /// Sets the validity of the login.
+    pub fn with_validity(self, value: TimeDelta) -> Self {
+        let exp = Utc::now() + value;
+        Self {
+            exp: exp.timestamp() as usize,
+            ..self
+        }
     }
 
-    pub fn get_service(&self) -> String {
-        self.user.get_service()
+    /// `False` if the login is still valid.
+    pub fn is_login_expired(&self) -> bool {
+        self.exp > Utc::now().timestamp() as usize
     }
 
     pub fn encode(
@@ -64,5 +84,41 @@ impl AccountClaims {
             &Validation::default(),
         )?;
         Ok(claims.claims)
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for AccountClaims {
+    type Error = anyhow::Error;
+
+    async fn from_request(
+        request: &'r Request<'_>,
+    ) -> Outcome<Self, Self::Error> {
+        let Some(settings) = request.rocket().state::<AuthSettings>() else {
+            log::error!(
+                "No AuthSettings managed by rocket. Please create an instance \
+                 and manage it with rocket."
+            );
+            return Outcome::Forward(Status::InternalServerError);
+        };
+        let cookies = request.cookies();
+
+        let auth = cookies.get_private(settings.cookie_name());
+        let Some(auth) = &auth else {
+            return Outcome::Error((
+                Status::Unauthorized,
+                anyhow!("No auth cookie available"),
+            ));
+        };
+        let user = AccountClaims::decode(
+            auth.value(),
+            settings.authentication_secret(),
+        );
+        match user {
+            Err(e) => {
+                return Outcome::Error((Status::Unauthorized, anyhow!("{e}")));
+            }
+            Ok(u) => Outcome::Success(u),
+        }
     }
 }
