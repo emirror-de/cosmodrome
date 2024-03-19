@@ -33,7 +33,7 @@ impl AuthSettings {
         Self {
             cookie_name: cookie_name.to_string(),
             authentication_secret: authentication_secret.to_string(),
-            login_validity: TimeDelta::try_minutes(1).unwrap(),
+            login_validity: TimeDelta::try_weeks(1).unwrap(),
             cookie_path: "/".to_string(),
         }
     }
@@ -55,7 +55,7 @@ impl AuthSettings {
         Self {
             cookie_name: cookie_name.to_string(),
             authentication_secret,
-            login_validity: TimeDelta::try_minutes(1).unwrap(),
+            login_validity: TimeDelta::try_weeks(1).unwrap(),
             cookie_path: "/".to_string(),
         }
     }
