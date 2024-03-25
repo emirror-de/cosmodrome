@@ -6,7 +6,7 @@ use rocket::serde::{
 /// Indicates the access level of an account.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
-pub enum AccountType {
+pub enum PassportType {
     Admin,
     Moderator,
     User,

@@ -1,8 +1,8 @@
 use crate::{
-    Account,
-    AccountClaims,
-    AccountCredentials,
-    AuthSettings,
+    AirportSettings,
+    BoardingPass,
+    Passport,
+    Ticket,
 };
 use anyhow::anyhow;
 use rocket::http::{
@@ -12,19 +12,19 @@ use rocket::http::{
 
 /// Provides an interface an account provider. This can be anything that contains
 /// the user information for example a database or a file.
-pub trait AccountProvider<C> {
+pub trait Immigration<C> {
     /// Verifies the given credentials and returns the user account on success.
-    fn verify(&self, credentials: C) -> anyhow::Result<Account>;
+    fn verify(&self, credentials: C) -> anyhow::Result<Passport>;
 
     /// Sets a cookie containing a [`jsonwebtoken`] if the credentials are successfully verified.
     fn login(
         &self,
         credentials: C,
-        settings: &AuthSettings,
+        settings: &AirportSettings,
         cookies: &CookieJar<'_>,
     ) -> anyhow::Result<()> {
         let account = self.verify(credentials)?;
-        let claims = AccountClaims::new(&account)?
+        let claims = BoardingPass::new(&account)?
             .with_validity(settings.login_validity().clone());
         let token = claims
             .encode(settings.authentication_secret())
@@ -36,7 +36,7 @@ pub trait AccountProvider<C> {
     }
 
     /// Removes the cookie if available.
-    fn logout(&self, settings: &AuthSettings, cookies: &CookieJar<'_>) {
+    fn logout(&self, settings: &AirportSettings, cookies: &CookieJar<'_>) {
         cookies.remove_private(
             Cookie::build(settings.cookie_name().to_string())
                 .path(settings.cookie_path().to_string()),
@@ -45,15 +45,12 @@ pub trait AccountProvider<C> {
 }
 
 /// Provides a list of accounts from memory.
-pub struct MemoryAccountProvider {
-    account_list: Vec<Account>,
+pub struct MemoryImmigration {
+    account_list: Vec<Passport>,
 }
 
-impl AccountProvider<AccountCredentials> for MemoryAccountProvider {
-    fn verify(
-        &self,
-        credentials: AccountCredentials,
-    ) -> anyhow::Result<Account> {
+impl Immigration<Ticket> for MemoryImmigration {
+    fn verify(&self, credentials: Ticket) -> anyhow::Result<Passport> {
         let account = self
             .account_list
             .iter()
@@ -68,8 +65,8 @@ impl AccountProvider<AccountCredentials> for MemoryAccountProvider {
     }
 }
 
-impl From<Vec<Account>> for MemoryAccountProvider {
-    fn from(account_list: Vec<Account>) -> Self {
+impl From<Vec<Passport>> for MemoryImmigration {
+    fn from(account_list: Vec<Passport>) -> Self {
         Self { account_list }
     }
 }

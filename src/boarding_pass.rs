@@ -1,6 +1,6 @@
 use crate::{
-    account::Account,
-    AuthSettings,
+    passport::Passport,
+    AirportSettings,
 };
 use anyhow::anyhow;
 use chrono::{
@@ -29,15 +29,15 @@ use rocket::{
 /// The claims that are stored in the [`jsonwebtoken`].
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
-pub struct AccountClaims {
-    pub user: Account,
+pub struct BoardingPass {
+    pub user: Passport,
     exp: usize,
 }
 
-impl AccountClaims {
+impl BoardingPass {
     /// Creates a new claim for the given account with a validity of one week.
     /// Use [with_validity](Self::with_validity) for adjustment of the valid timespan.
-    pub fn new(user: &Account) -> anyhow::Result<Self> {
+    pub fn new(user: &Passport) -> anyhow::Result<Self> {
         let exp = Utc::now();
         let valid =
             TimeDelta::try_weeks(1).ok_or(anyhow!("TimeDelta overflow."))?;
@@ -78,7 +78,7 @@ impl AccountClaims {
         token: &str,
         secret: &str,
     ) -> Result<Self, jsonwebtoken::errors::Error> {
-        let claims = jsonwebtoken::decode::<AccountClaims>(
+        let claims = jsonwebtoken::decode::<BoardingPass>(
             &token,
             &DecodingKey::from_secret(secret.as_bytes()),
             &Validation::default(),
@@ -88,16 +88,16 @@ impl AccountClaims {
 }
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for AccountClaims {
+impl<'r> FromRequest<'r> for BoardingPass {
     type Error = anyhow::Error;
 
     async fn from_request(
         request: &'r Request<'_>,
     ) -> Outcome<Self, Self::Error> {
-        let Some(settings) = request.rocket().state::<AuthSettings>() else {
+        let Some(settings) = request.rocket().state::<AirportSettings>() else {
             log::error!(
-                "No AuthSettings managed by rocket. Please create an instance \
-                 and manage it with rocket."
+                "No AirportSettings managed by rocket. Please create an \
+                 instance and manage it with rocket."
             );
             return Outcome::Forward(Status::InternalServerError);
         };
@@ -110,7 +110,7 @@ impl<'r> FromRequest<'r> for AccountClaims {
                 anyhow!("No auth cookie available"),
             ));
         };
-        let user = AccountClaims::decode(
+        let user = BoardingPass::decode(
             auth.value(),
             settings.authentication_secret(),
         );

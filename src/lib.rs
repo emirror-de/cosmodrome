@@ -1,22 +1,22 @@
-pub use account::{
-    Account,
-    AccountType,
-};
-pub use account_claims::AccountClaims;
-pub use account_credentials::AccountCredentials;
-pub use account_provider::{
-    AccountProvider,
-    MemoryAccountProvider,
-};
+pub use boarding_pass::BoardingPass;
 use chrono::TimeDelta;
+pub use immigration::{
+    Immigration,
+    MemoryImmigration,
+};
+pub use passport::{
+    Passport,
+    PassportType,
+};
+pub use ticket::Ticket;
 
-mod account;
-mod account_claims;
-mod account_credentials;
-mod account_provider;
+mod boarding_pass;
+mod immigration;
+mod passport;
+mod ticket;
 
 /// Global settings required to run the web auth implementation.
-pub struct AuthSettings {
+pub struct AirportSettings {
     /// The cookie name where the [AccountClaims](account_claims::AccountClaims) should be stored.
     cookie_name: String,
     /// Defines the path where the cookie is valid.
@@ -27,7 +27,7 @@ pub struct AuthSettings {
     login_validity: TimeDelta,
 }
 
-impl AuthSettings {
+impl AirportSettings {
     /// Creates a new settings instance.
     pub fn new(cookie_name: &str, authentication_secret: &str) -> Self {
         Self {

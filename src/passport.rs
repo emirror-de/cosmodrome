@@ -1,7 +1,6 @@
 //! Account data model.
-mod account_type;
+mod passport_type;
 
-pub use account_type::AccountType;
 use anyhow::anyhow;
 use argon2::{
     password_hash::{
@@ -15,6 +14,7 @@ use argon2::{
     Argon2,
 };
 use chrono::prelude::*;
+pub use passport_type::PassportType;
 use rocket::serde::{
     Deserialize,
     Serialize,
@@ -23,7 +23,7 @@ use rocket::serde::{
 /// Defines a user account of a service.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
-pub struct Account {
+pub struct Passport {
     /// The unique id of the account. This can be for example the username or email.
     pub id: String,
     /// Password to login to the service. This is never stored plain text.
@@ -31,7 +31,7 @@ pub struct Account {
     /// Service name the account is valid for.
     service: String,
     /// Type of this account.
-    pub account_type: AccountType,
+    pub account_type: PassportType,
     /// Wether the account is disabled.
     pub disabled: bool,
     /// Whether the account has been confirmed. This is useful in combination with for example
@@ -41,13 +41,13 @@ pub struct Account {
     pub expires_at: DateTime<Utc>,
 }
 
-impl Account {
+impl Passport {
     /// Creates a new user account with [Account::disabled] and [Account::confirmed] set to `false`.
     pub fn new(
         id: &str,
         password: &str,
         service: &str,
-        account_type: AccountType,
+        account_type: PassportType,
     ) -> anyhow::Result<Self> {
         Ok(Self {
             id: id.to_string(),

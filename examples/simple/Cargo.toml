@@ -8,4 +8,4 @@ description = "Simple example to create a login with rocket-webauth"
 anyhow = "1"
 log = "0.4"
 rocket = { version = "0.5", features = ["json"] }
-rocket-webauth = { path = "../../" }
+rocket-airport = { path = "../../" }

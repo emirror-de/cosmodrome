@@ -1,0 +1,26 @@
+layout {
+	tab name="rocket-airport" focus=true {
+		pane size=1 borderless=true {
+			plugin location="zellij:tab-bar"
+		}
+		pane split_direction="vertical" {
+			pane {
+				pane split_direction="vertical" {
+					pane {
+						command "cargo"
+						args "watch" "-x" "lcheck --all-features"
+					}
+					pane
+				}
+				pane command="gitui"
+			}
+			pane focus=true {
+				command "hx"
+				args "."
+			}
+		}
+		pane size=2 borderless=true {
+			plugin location="zellij:status-bar"
+		}
+	}
+}

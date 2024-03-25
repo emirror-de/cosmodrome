@@ -11,14 +11,14 @@ use rocket::{
     serde::json::Json,
     State,
 };
-use rocket_webauth::{
-    Account,
-    AccountClaims,
-    AccountCredentials,
-    AccountProvider,
-    AccountType,
-    AuthSettings,
-    MemoryAccountProvider,
+use rocket_airport::{
+    AirportSettings,
+    BoardingPass,
+    Immigration,
+    MemoryImmigration,
+    Passport,
+    PassportType,
+    Ticket,
 };
 
 #[get("/")]
@@ -28,9 +28,9 @@ async fn index() -> Option<NamedFile> {
 
 #[post("/login", format = "json", data = "<credentials>")]
 async fn login(
-    credentials: Json<AccountCredentials>,
-    account_provider: &State<MemoryAccountProvider>,
-    auth_settings: &State<AuthSettings>,
+    credentials: Json<Ticket>,
+    account_provider: &State<MemoryImmigration>,
+    auth_settings: &State<AirportSettings>,
     cookies: &CookieJar<'_>,
 ) -> Status {
     match account_provider.login(
@@ -47,19 +47,20 @@ async fn login(
 }
 
 #[get("/private")]
-async fn private(user: AccountClaims) -> String {
+async fn private(user: BoardingPass) -> String {
     format!("{user:#?}")
 }
 
 #[launch]
 fn simple_login() -> _ {
     // We create a global state containing information with the cookie name and encryption secret.
-    let auth_settings = AuthSettings::new_with_random_secret("rocket_webauth");
-    let auth_provider = MemoryAccountProvider::from(vec![Account::new(
+    let auth_settings =
+        AirportSettings::new_with_random_secret("rocket_webauth");
+    let auth_provider = MemoryImmigration::from(vec![Passport::new(
         "simple_user",
         "somepassword",
         "simple_service",
-        AccountType::Admin,
+        PassportType::Admin,
     )
     .unwrap()]);
 

@@ -6,7 +6,7 @@ use rocket::serde::{
 /// Contains the credentials for a simple login.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
-pub struct AccountCredentials {
+pub struct Ticket {
     /// The identification of the user, eg. a username.
     pub id: String,
     /// The secret of the user, eg. a password.

@@ -1,5 +1,5 @@
 [package]
-name = "rocket-webauth"
+name = "rocket-airport"
 version = "0.2.0-dev"
 authors = ["Lewin Probst <info@emirror.de>"]
 edition = "2021"
