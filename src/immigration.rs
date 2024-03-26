@@ -1,5 +1,5 @@
 use crate::{
-    AirportSettings,
+    AirportConfig,
     BoardingPass,
     Passport,
     Ticket,
@@ -20,7 +20,7 @@ pub trait Immigration<C> {
     fn login(
         &self,
         credentials: C,
-        settings: &AirportSettings,
+        settings: &AirportConfig,
         cookies: &CookieJar<'_>,
     ) -> anyhow::Result<()> {
         let account = self.verify(credentials)?;
@@ -35,8 +35,9 @@ pub trait Immigration<C> {
         Ok(())
     }
 
-    /// Removes the cookie if available.
-    fn logout(&self, settings: &AirportSettings, cookies: &CookieJar<'_>) {
+    /// Loggs the user out by removing the cookie that contains their
+    /// boarding pass.
+    fn logout(&self, settings: &AirportConfig, cookies: &CookieJar<'_>) {
         cookies.remove_private(
             Cookie::build(settings.cookie_name().to_string())
                 .path(settings.cookie_path().to_string()),
