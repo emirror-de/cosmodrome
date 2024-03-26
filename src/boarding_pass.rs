@@ -1,6 +1,6 @@
 use crate::{
     passport::Passport,
-    AirportConfig,
+    SpaceportSetup,
 };
 use anyhow::anyhow;
 use chrono::{
@@ -94,9 +94,9 @@ impl<'r> FromRequest<'r> for BoardingPass {
     async fn from_request(
         request: &'r Request<'_>,
     ) -> Outcome<Self, Self::Error> {
-        let Some(settings) = request.rocket().state::<AirportConfig>() else {
+        let Some(settings) = request.rocket().state::<SpaceportSetup>() else {
             log::error!(
-                "No AirportConfig managed by rocket. Please create an \
+                "No SpaceportSetup managed by rocket. Please create an \
                  instance and manage it with rocket."
             );
             return Outcome::Forward(Status::InternalServerError);

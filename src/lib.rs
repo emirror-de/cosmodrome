@@ -1,8 +1,8 @@
 pub use boarding_pass::BoardingPass;
 use chrono::TimeDelta;
-pub use immigration::{
-    Immigration,
-    MemoryImmigration,
+pub use gate::{
+    Gate,
+    MemoryGate,
 };
 pub use passport::{
     Passport,
@@ -11,12 +11,12 @@ pub use passport::{
 pub use ticket::Ticket;
 
 mod boarding_pass;
-mod immigration;
+mod gate;
 mod passport;
 mod ticket;
 
-/// Required configuration values to run an airport.
-pub struct AirportConfig {
+/// Required spaceport configuration values.
+pub struct SpaceportSetup {
     /// The cookie name where the [BoardingPass](boarding_pass::BoardingPass) will be stored. Defaults to `rocket-airport`.
     cookie_name: String,
     /// Defines the path where the cookie is valid. Defaults to `/`
@@ -28,7 +28,7 @@ pub struct AirportConfig {
     login_validity: TimeDelta,
 }
 
-impl Default for AirportConfig {
+impl Default for SpaceportSetup {
     fn default() -> Self {
         use rand::{
             distributions::Alphanumeric,
@@ -51,7 +51,7 @@ impl Default for AirportConfig {
     }
 }
 
-impl AirportConfig {
+impl SpaceportSetup {
     /// Creates a new airport configuration with default values.
     pub fn new() -> Self {
         Self::default()

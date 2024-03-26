@@ -1,7 +1,7 @@
 use crate::{
-    AirportConfig,
     BoardingPass,
     Passport,
+    SpaceportSetup,
     Ticket,
 };
 use anyhow::anyhow;
@@ -12,7 +12,7 @@ use rocket::http::{
 
 /// Provides an interface an account provider. This can be anything that contains
 /// the user information for example a database or a file.
-pub trait Immigration<C> {
+pub trait Gate<C> {
     /// Verifies the given credentials and returns the user account on success.
     fn verify(&self, credentials: C) -> anyhow::Result<Passport>;
 
@@ -20,7 +20,7 @@ pub trait Immigration<C> {
     fn login(
         &self,
         credentials: C,
-        settings: &AirportConfig,
+        settings: &SpaceportSetup,
         cookies: &CookieJar<'_>,
     ) -> anyhow::Result<()> {
         let account = self.verify(credentials)?;
@@ -37,7 +37,7 @@ pub trait Immigration<C> {
 
     /// Loggs the user out by removing the cookie that contains their
     /// boarding pass.
-    fn logout(&self, settings: &AirportConfig, cookies: &CookieJar<'_>) {
+    fn logout(&self, settings: &SpaceportSetup, cookies: &CookieJar<'_>) {
         cookies.remove_private(
             Cookie::build(settings.cookie_name().to_string())
                 .path(settings.cookie_path().to_string()),
@@ -46,11 +46,11 @@ pub trait Immigration<C> {
 }
 
 /// Provides a list of accounts from memory.
-pub struct MemoryImmigration {
+pub struct MemoryGate {
     account_list: Vec<Passport>,
 }
 
-impl Immigration<Ticket> for MemoryImmigration {
+impl Gate<Ticket> for MemoryGate {
     fn verify(&self, credentials: Ticket) -> anyhow::Result<Passport> {
         let account = self
             .account_list
@@ -66,7 +66,7 @@ impl Immigration<Ticket> for MemoryImmigration {
     }
 }
 
-impl From<Vec<Passport>> for MemoryImmigration {
+impl From<Vec<Passport>> for MemoryGate {
     fn from(account_list: Vec<Passport>) -> Self {
         Self { account_list }
     }
