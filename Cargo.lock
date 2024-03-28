@@ -306,6 +306,7 @@ dependencies = [
  "log",
  "rand",
  "rocket",
+ "serde",
 ]
 
 [[package]]
