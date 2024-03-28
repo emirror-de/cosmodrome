@@ -14,7 +14,7 @@ readme = "README.md"
 
 [features]
 default = ["server"]
-server = ["rocket", "argon2", "chrono", "jsonwebtoken", "log", "rand", "anyhow"]
+server = ["dep:rocket", "dep:argon2", "dep:chrono", "dep:jsonwebtoken", "dep:log", "dep:rand", "dep:anyhow", "client"]
 client = []
 
 [dependencies]

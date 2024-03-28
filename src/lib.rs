@@ -24,4 +24,5 @@ mod gate;
 mod passport;
 #[cfg(feature = "server")]
 mod spaceport_setup;
+#[cfg(feature = "client")]
 mod ticket;
