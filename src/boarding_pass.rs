@@ -30,6 +30,7 @@ use rocket::{
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct BoardingPass {
+    /// The passport of the user.
     pub user: Passport,
     exp: usize,
 }
@@ -62,6 +63,8 @@ impl BoardingPass {
         self.exp > Utc::now().timestamp() as usize
     }
 
+    /// Encodes the boarding pass with the given secret into a
+    /// [jsonwebtoken].
     pub fn encode(
         &self,
         secret: &str,
@@ -74,6 +77,8 @@ impl BoardingPass {
         Ok(web_token)
     }
 
+    /// Decodes the boarding pass with the given secret from a
+    /// [jsonwebtoken].
     pub fn decode(
         token: &str,
         secret: &str,

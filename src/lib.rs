@@ -1,3 +1,5 @@
+#![deny(missing_docs)]
+#![doc = include_str!("../README.md")]
 pub use boarding_pass::BoardingPass;
 use chrono::TimeDelta;
 pub use gate::{
@@ -17,14 +19,19 @@ mod ticket;
 
 /// Required spaceport configuration values.
 pub struct SpaceportSetup {
-    /// The cookie name where the [BoardingPass](boarding_pass::BoardingPass) will be stored. Defaults to `rocket-airport`.
+    /// The cookie name where the [BoardingPass](boarding_pass::BoardingPass) will be stored. Defaults to `cosmodrome`.
     cookie_name: String,
-    /// Defines the path where the cookie is valid. Defaults to `/`
+    /// Defines the path where the cookie is valid.
+    ///
+    /// **Default:**  `/`
     cookie_path: String,
     /// The authentication secret used to encrypt the [jsonwebtoken].
-    /// Default value is a 60 character random key.
+    ///
+    /// **Default:**  60 character random key.
     authentication_secret: String,
-    /// Defines how long the [BoardingPass](boarding_pass::BoardingPass) is valid. Defaults to one week.
+    /// Defines how long the [BoardingPass](boarding_pass::BoardingPass) is valid.
+    ///
+    /// **Default:**  One week.
     login_validity: TimeDelta,
 }
 
@@ -42,7 +49,7 @@ impl Default for SpaceportSetup {
             .map(char::from)
             .collect();
         Self {
-            cookie_name: "rocket-airport".to_string(),
+            cookie_name: "cosmodrome".to_string(),
             cookie_path: "/".to_string(),
             authentication_secret,
             login_validity: TimeDelta::try_weeks(1)
