@@ -1,6 +1,4 @@
 //! Account data model.
-mod passport_type;
-
 use anyhow::anyhow;
 use argon2::{
     password_hash::{
@@ -13,36 +11,42 @@ use argon2::{
     },
     Argon2,
 };
-use chrono::prelude::*;
+use chrono::{
+    DateTime,
+    TimeDelta,
+    Utc,
+};
 pub use passport_type::PassportType;
 use rocket::serde::{
     Deserialize,
     Serialize,
 };
 
+mod passport_type;
+
 /// Defines a user account of a service.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Passport {
-    /// The unique id of the account. This can be for example the username or email.
+    /// The unique id of the passport. For example username, email or some string of your choice.
     pub id: String,
-    /// Password to login to the service. This is never stored plain text.
+    /// Password to login to the service. Resides encoded in memory.
     password: String,
-    /// Service name the account is valid for.
+    /// Service name the passport is valid for.
     service: String,
-    /// Type of this account.
+    /// Type of this passport.
     pub account_type: PassportType,
-    /// Wether the account is disabled.
+    /// Wether the passport is disabled.
     pub disabled: bool,
-    /// Whether the account has been confirmed. This is useful in combination with for example
-    /// E-Mail verficiation.
+    /// Whether the passport has been confirmed. This is useful in combination
+    /// with for example E-Mail verficiation.
     pub confirmed: bool,
-    /// Determines when this account expires.
+    /// Determines when this passport expires.
     pub expires_at: DateTime<Utc>,
 }
 
 impl Passport {
-    /// Creates a new user account with [Account::disabled] and [Account::confirmed] set to `false`.
+    /// Creates a new passport with [Passport::disabled] and [Passport::confirmed] set to `false`.
     pub fn new(
         id: &str,
         password: &str,
@@ -56,7 +60,11 @@ impl Passport {
             account_type,
             disabled: false,  // always activate
             confirmed: false, // always require user to confirm it
-            expires_at: chrono::Utc::now(),
+            expires_at: chrono::Utc::now()
+                + TimeDelta::try_weeks(104).ok_or(anyhow!(
+                    "Internal server error. Could not create TimeDelta with \
+                     two years."
+                ))?,
         })
     }
 
