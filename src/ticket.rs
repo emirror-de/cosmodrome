@@ -11,3 +11,13 @@ pub struct Ticket {
     /// The secret of the user, eg. a password.
     pub secret: String,
 }
+
+impl Ticket {
+    /// Creates a new ticket with the given id and secret.
+    pub fn new(id: &str, secret: &str) -> Self {
+        Self {
+            id: id.to_string(),
+            secret: secret.to_string(),
+        }
+    }
+}
