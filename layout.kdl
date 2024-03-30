@@ -3,21 +3,21 @@ layout {
 		pane size=1 borderless=true {
 			plugin location="zellij:tab-bar"
 		}
+		pane {
+			command "hx"
+			args "."
+		}
+		pane size=2 borderless=true {
+			plugin location="zellij:status-bar"
+		}
+	}
+	tab name="vcs" {
+		pane size=1 borderless=true {
+			plugin location="zellij:tab-bar"
+		}
 		pane split_direction="vertical" {
-			pane {
-				pane split_direction="vertical" {
-					pane {
-						command "cargo"
-						args "watch" "-x" "lcheck --all-features"
-					}
-					pane
-				}
-				pane command="gitui"
-			}
-			pane focus=true {
-				command "hx"
-				args "."
-			}
+			pane command="gitui"
+			pane
 		}
 		pane size=2 borderless=true {
 			plugin location="zellij:status-bar"
