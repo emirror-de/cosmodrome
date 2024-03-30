@@ -2,10 +2,10 @@
 name = "simple"
 version = "0.1.0"
 edition = "2021"
-description = "Simple example to create a login with rocket-webauth"
+description = "Simple example to create a login with cosmodrome"
 
 [dependencies]
 anyhow = "1"
 log = "0.4"
 rocket = { version = "0.5", features = ["json"] }
-rocket-airport = { path = "../../" }
+cosmodrome = { path = "../../" }
