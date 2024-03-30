@@ -32,8 +32,8 @@ pub struct Passport {
     pub id: String,
     /// Password to login to the service. Resides encoded in memory.
     password: String,
-    /// Service name the passport is valid for.
-    service: String,
+    /// A list of scopes that the user can access.
+    services: Vec<String>,
     /// Type of this passport.
     pub account_type: PassportType,
     /// Wether the passport is disabled.
@@ -50,13 +50,16 @@ impl Passport {
     pub fn new(
         id: &str,
         password: &str,
-        service: &str,
+        services: &[&str],
         account_type: PassportType,
     ) -> anyhow::Result<Self> {
         Ok(Self {
             id: id.to_string(),
             password: Self::hash_password(&password)?,
-            service: service.to_string(),
+            services: services
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<String>>(),
             account_type,
             disabled: false,  // always activate
             confirmed: false, // always require user to confirm it
@@ -68,9 +71,9 @@ impl Passport {
         })
     }
 
-    /// Returns the service this account belongs to.
-    pub fn get_service(&self) -> String {
-        self.service.clone()
+    /// Returns the services this passport is valid for.
+    pub fn services(&self) -> &[String] {
+        &self.services
     }
 
     /// Saves the ```new_password``` to the struct after verifying the ```old_password```.

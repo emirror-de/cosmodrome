@@ -1,6 +1,11 @@
 use crate::{
+    gate::{
+        memory::MemoryGate,
+        Bearer,
+        Cookie,
+        GateType,
+    },
     passport::Passport,
-    SpaceportSetup,
 };
 use anyhow::anyhow;
 use chrono::{
@@ -25,17 +30,20 @@ use rocket::{
         Serialize,
     },
 };
+use std::marker::PhantomData;
 
 /// The claims that are stored in the [`jsonwebtoken`].
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
-pub struct BoardingPass {
+pub struct BoardingPass<T: GateType> {
     /// The passport of the user.
     pub user: Passport,
     exp: usize,
+    #[serde(skip)]
+    phantom_data: PhantomData<T>,
 }
 
-impl BoardingPass {
+impl<T: GateType> BoardingPass<T> {
     /// Creates a new claim for the given account with a validity of one week.
     /// Use [with_validity](Self::with_validity) for adjustment of the valid timespan.
     pub fn new(user: &Passport) -> anyhow::Result<Self> {
@@ -46,6 +54,7 @@ impl BoardingPass {
         Ok(Self {
             user: user.clone(),
             exp: exp.timestamp() as usize,
+            phantom_data: PhantomData,
         })
     }
 
@@ -62,10 +71,15 @@ impl BoardingPass {
     pub fn is_login_expired(&self) -> bool {
         self.exp > Utc::now().timestamp() as usize
     }
+}
 
+impl<T: GateType>
+    BoardingPassEncoder<T, String, &str, jsonwebtoken::errors::Error>
+    for BoardingPass<T>
+{
     /// Encodes the boarding pass with the given secret into a
     /// [jsonwebtoken].
-    pub fn encode(
+    fn encode(
         &self,
         secret: &str,
     ) -> Result<String, jsonwebtoken::errors::Error> {
@@ -76,14 +90,19 @@ impl BoardingPass {
         )?;
         Ok(web_token)
     }
+}
 
+impl<T: GateType>
+    BoardingPassDecoder<T, &str, &str, jsonwebtoken::errors::Error>
+    for BoardingPass<T>
+{
     /// Decodes the boarding pass with the given secret from a
     /// [jsonwebtoken].
-    pub fn decode(
+    fn decode(
         token: &str,
         secret: &str,
     ) -> Result<Self, jsonwebtoken::errors::Error> {
-        let claims = jsonwebtoken::decode::<BoardingPass>(
+        let claims = jsonwebtoken::decode::<Self>(
             &token,
             &DecodingKey::from_secret(secret.as_bytes()),
             &Validation::default(),
@@ -92,23 +111,35 @@ impl BoardingPass {
     }
 }
 
+/// If your [BoardingPass] is too big to carry, the encoder is ready to compress its size. This can be by creating a token or anything else you require.
+pub trait BoardingPassEncoder<T: GateType, O, P, E> {
+    /// Encodes the given [BoardingPass] using the given properties.
+    fn encode(&self, properties: P) -> Result<O, E>;
+}
+
+/// If your [BoardingPass] has been encoded, you can decode it with this trait.
+pub trait BoardingPassDecoder<T: GateType, I, P, E> {
+    /// Decodoes the given [BoardingPass] using the given properties.
+    fn decode(encoded_value: I, properties: P) -> Result<BoardingPass<T>, E>;
+}
+
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for BoardingPass {
+impl<'r> FromRequest<'r> for BoardingPass<Cookie> {
     type Error = anyhow::Error;
 
     async fn from_request(
         request: &'r Request<'_>,
     ) -> Outcome<Self, Self::Error> {
-        let Some(settings) = request.rocket().state::<SpaceportSetup>() else {
+        let Some(gate) = request.rocket().state::<MemoryGate>() else {
             log::error!(
-                "No SpaceportSetup managed by rocket. Please create an \
-                 instance and manage it with rocket."
+                "No MemoryGate managed by rocket. Please create an instance \
+                 and manage it with rocket."
             );
             return Outcome::Forward(Status::InternalServerError);
         };
         let cookies = request.cookies();
 
-        let auth = cookies.get_private(settings.cookie_name());
+        let auth = cookies.get_private(gate.options.cookie_name());
         let Some(auth) = &auth else {
             return Outcome::Error((
                 Status::Unauthorized,
@@ -117,8 +148,48 @@ impl<'r> FromRequest<'r> for BoardingPass {
         };
         let user = BoardingPass::decode(
             auth.value(),
-            settings.authentication_secret(),
+            gate.options.authentication_secret(),
         );
+        match user {
+            Err(e) => {
+                return Outcome::Error((Status::Unauthorized, anyhow!("{e}")));
+            }
+            Ok(u) => Outcome::Success(u),
+        }
+    }
+}
+
+#[rocket::async_trait]
+impl<'r> FromRequest<'r> for BoardingPass<Bearer> {
+    type Error = anyhow::Error;
+
+    async fn from_request(
+        request: &'r Request<'_>,
+    ) -> Outcome<Self, Self::Error> {
+        let Some(gate) = request.rocket().state::<MemoryGate>() else {
+            log::error!(
+                "No MemoryGate managed by rocket. Please create an instance \
+                 and manage it with rocket."
+            );
+            return Outcome::Forward(Status::InternalServerError);
+        };
+        let headers = request.headers();
+
+        let Some(auth) = headers.get_one("Authorization") else {
+            return Outcome::Error((
+                Status::Unauthorized,
+                anyhow!("No Authorization header available."),
+            ));
+        };
+        let user = if auth.starts_with("Bearer ") {
+            let token = auth.strip_prefix("Bearer ").unwrap();
+            BoardingPass::decode(token, gate.options.authentication_secret())
+        } else {
+            return Outcome::Error((
+                Status::Unauthorized,
+                anyhow!("Not a valid Bearer authorization header."),
+            ));
+        };
         match user {
             Err(e) => {
                 return Outcome::Error((Status::Unauthorized, anyhow!("{e}")));
