@@ -1,23 +1,28 @@
 //! Implementations of a [Gate] that lives in memory.
 use super::{
     Bearer,
+    BoardingPassDecoder,
+    BoardingPassEncoder,
     BoardingPassGenerator,
     BoardingPassStorage,
     Cookie,
     Gate,
+    GateType,
     SecurityCheck,
 };
 use crate::{
-    boarding_pass::{
-        BoardingPassDecoder,
-        BoardingPassEncoder,
-    },
     BoardingPass,
     Passport,
     Ticket,
 };
 use anyhow::anyhow;
 use chrono::TimeDelta;
+use jsonwebtoken::{
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation,
+};
 use rocket::http::{
     Cookie as RocketCookie,
     CookieJar,
@@ -163,10 +168,8 @@ impl BoardingPassStorage<Cookie, &CookieJar<'_>, ()> for MemoryGate {
         else {
             return Ok(None);
         };
-        let boarding_pass = BoardingPass::<Cookie>::decode(
-            boarding_pass.value(),
-            self.options.authentication_secret(),
-        )?;
+        let boarding_pass: BoardingPass<Cookie> =
+            self.decode(boarding_pass.value())?;
         Ok(Some(boarding_pass))
     }
     fn store_boarding_pass(
@@ -174,9 +177,7 @@ impl BoardingPassStorage<Cookie, &CookieJar<'_>, ()> for MemoryGate {
         boarding_pass: &BoardingPass<Cookie>,
         storage: &CookieJar<'_>,
     ) -> anyhow::Result<()> {
-        let token = boarding_pass
-            .encode(self.options.authentication_secret())
-            .map_err(|e| anyhow!("{e}"))?;
+        let token = self.encode(boarding_pass).map_err(|e| anyhow!("{e}"))?;
         let cookie = RocketCookie::build((
             self.options.cookie_name().to_string(),
             token,
@@ -200,7 +201,18 @@ impl BoardingPassStorage<Cookie, &CookieJar<'_>, ()> for MemoryGate {
         Ok(())
     }
 }
-impl Gate<Ticket, Cookie, &CookieJar<'_>, ()> for MemoryGate {}
+impl
+    Gate<
+        Ticket,
+        Cookie,
+        &CookieJar<'_>,
+        (),
+        String,
+        &str,
+        jsonwebtoken::errors::Error,
+    > for MemoryGate
+{
+}
 
 impl From<(Vec<Passport>, MemoryGateOptions)> for MemoryGate {
     fn from(value: (Vec<Passport>, MemoryGateOptions)) -> Self {
@@ -235,4 +247,47 @@ impl BoardingPassStorage<Bearer, (), ()> for MemoryGate {
         Ok(())
     }
 }
-impl Gate<Ticket, Bearer, (), ()> for MemoryGate {}
+impl Gate<Ticket, Bearer, (), (), String, &str, jsonwebtoken::errors::Error>
+    for MemoryGate
+{
+}
+
+impl<T: GateType> BoardingPassEncoder<T, String, jsonwebtoken::errors::Error>
+    for MemoryGate
+{
+    /// Encodes the boarding pass with the given secret into a
+    /// [jsonwebtoken].
+    fn encode(
+        &self,
+        boarding_pass: &BoardingPass<T>,
+    ) -> Result<String, jsonwebtoken::errors::Error> {
+        let web_token = jsonwebtoken::encode(
+            &Header::default(),
+            boarding_pass,
+            &EncodingKey::from_secret(
+                self.options.authentication_secret().as_bytes(),
+            ),
+        )?;
+        Ok(web_token)
+    }
+}
+
+impl<T: GateType> BoardingPassDecoder<T, &str, jsonwebtoken::errors::Error>
+    for MemoryGate
+{
+    /// Decodes the boarding pass with the given secret from a
+    /// [jsonwebtoken].
+    fn decode(
+        &self,
+        token: &str,
+    ) -> Result<BoardingPass<T>, jsonwebtoken::errors::Error> {
+        let claims = jsonwebtoken::decode::<BoardingPass<T>>(
+            &token,
+            &DecodingKey::from_secret(
+                self.options.authentication_secret().as_bytes(),
+            ),
+            &Validation::default(),
+        )?;
+        Ok(claims.claims)
+    }
+}

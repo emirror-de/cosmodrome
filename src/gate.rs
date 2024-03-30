@@ -1,10 +1,12 @@
 //! A [Gate] is the main entrance to your [rocket]. It provides methods for access control, as well
 //! as login and logout.
+use std::fmt::Display;
+
 use crate::{
-    boarding_pass::BoardingPassEncoder,
     BoardingPass,
     Passport,
 };
+use anyhow::anyhow;
 
 pub mod memory;
 
@@ -63,17 +65,19 @@ pub trait BoardingPassStorage<T: GateType, S, I> {
 
 /// Provides an interface an account provider. This can be anything that contains
 /// the user information for example a database or a file.
-pub trait Gate<C, T: GateType, S, I>:
-    SecurityCheck<C> + BoardingPassGenerator<T> + BoardingPassStorage<T, S, I>
+pub trait Gate<C, T: GateType, S, I, EO, EI, ERR>:
+    SecurityCheck<C>
+    + BoardingPassGenerator<T>
+    + BoardingPassStorage<T, S, I>
+    + BoardingPassEncoder<T, EO, ERR>
+    + BoardingPassDecoder<T, EI, ERR>
+where
+    ERR: Display,
 {
     /// Sets a cookie containing a [`jsonwebtoken`] if the credentials are successfully verified.
     ///
     /// Returns the encoded [BoardingPass] if successful.
-    fn login(
-        &self,
-        credentials: C,
-        storage: S,
-    ) -> anyhow::Result<BoardingPass<T>> {
+    fn login(&self, credentials: C, storage: S) -> anyhow::Result<EO> {
         let passport = self.verify_credentials(credentials)?;
         let boarding_pass = self.generate_boarding_pass(&passport)?;
         //.with_validity(self.options.login_validity().clone());
@@ -91,7 +95,7 @@ pub trait Gate<C, T: GateType, S, I>:
         cookies.add_private(cookie);
         Ok(())
         */
-        Ok(boarding_pass)
+        self.encode(&boarding_pass).map_err(|e| anyhow!("{e}"))
     }
 
     /// Loggs the user out by removing the cookie that contains their
@@ -99,4 +103,22 @@ pub trait Gate<C, T: GateType, S, I>:
     fn logout(&self, identifier: I, storage: S) -> anyhow::Result<()> {
         self.remove_boarding_pass(identifier, storage)
     }
+}
+
+/// If your [BoardingPass] is too big to carry, the encoder is ready to compress its size. This can be by creating a token or anything else you require.
+pub trait BoardingPassEncoder<T: GateType, O, E>
+where
+    E: Display,
+{
+    /// Encodes the given [BoardingPass] using the given properties.
+    fn encode(&self, boarding_pass: &BoardingPass<T>) -> Result<O, E>;
+}
+
+/// If your [BoardingPass] has been encoded, you can decode it with this trait.
+pub trait BoardingPassDecoder<T: GateType, I, E>
+where
+    E: Display,
+{
+    /// Decodoes the given [BoardingPass] using the given properties.
+    fn decode(&self, encoded_value: I) -> Result<BoardingPass<T>, E>;
 }
