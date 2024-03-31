@@ -1,23 +1,28 @@
 use cosmodrome::{
-    gate::{
-        memory::{
-            MemoryGate,
-            MemoryGateOptions,
-        },
-        Bearer,
-        Cookie,
-        Gate,
+    auth_type::Bearer,
+    boarding_pass::{
+        payloads::JsonWebToken,
+        BoardingPass,
     },
-    BoardingPass,
-    Passport,
-    PassportType,
+    ciphering::JwtCipher,
+    gate::{
+        Gate,
+        JwtBearerGate,
+    },
+    passport::{
+        Passport,
+        PassportType,
+    },
+    passport_register::MemoryPassportRegister,
+    storage::{
+        Storage,
+    },
     Ticket,
 };
 use rocket::{
     fs::NamedFile,
     get,
     http::{
-        CookieJar,
         Status,
     },
     launch,
@@ -35,10 +40,16 @@ async fn index() -> Option<NamedFile> {
 #[post("/login", format = "json", data = "<credentials>")]
 async fn login(
     credentials: Json<Ticket>,
-    gate: &State<MemoryGate>,
+    register: &State<MemoryPassportRegister>,
+    cipher: &State<JwtCipher>,
 ) -> (Status, String) {
-    match gate.login(credentials.into_inner(), ()) {
-        Ok(b) => (Status::Ok, b),
+    let storage = Storage::new((), (), cipher.inner().to_owned());
+    match JwtBearerGate::login(
+        credentials.into_inner(),
+        register.inner(),
+        &storage,
+    ) {
+        Ok(token) => (Status::Ok, token),
         Err(e) => {
             log::error!("{e}");
             (Status::Unauthorized, String::new())
@@ -47,26 +58,24 @@ async fn login(
 }
 
 #[get("/private")]
-async fn private(user: BoardingPass<Bearer>) -> String {
+async fn private(user: BoardingPass<JsonWebToken, Bearer>) -> String {
     format!("{user:#?}")
 }
 
 #[launch]
 fn simple_login() -> _ {
-    // We can customize the settings of the gate before launch.
-    let gate_settings = MemoryGateOptions::default();
-    let gate = MemoryGate::from((
-        vec![Passport::new(
-            "simple_user",
-            "somepassword",
-            &["simple_service"],
-            PassportType::Admin,
-        )
-        .unwrap()],
-        gate_settings,
-    ));
+    // We need to have a global register where all users are stored.
+    let register = MemoryPassportRegister::from(vec![Passport::new(
+        "simple_user",
+        "somepassword",
+        &["simple_service"],
+        PassportType::Admin,
+    )
+    .unwrap()]);
+    let cipher = JwtCipher::random();
 
     rocket::build()
         .mount("/", routes![index, private, login])
-        .manage(gate)
+        .manage(register)
+        .manage(cipher)
 }

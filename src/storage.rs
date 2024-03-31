@@ -2,6 +2,7 @@
 use crate::{
     auth_type::{
         AuthType,
+        Bearer,
         Cookie,
     },
     boarding_pass::{
@@ -14,9 +15,13 @@ use crate::{
     },
 };
 use anyhow::anyhow;
-use rocket::http::{
-    Cookie as RocketCookie,
-    CookieJar,
+use http::header::AUTHORIZATION;
+use rocket::{
+    http::{
+        Cookie as RocketCookie,
+        CookieJar,
+    },
+    Request,
 };
 use std::marker::PhantomData;
 
@@ -150,6 +155,46 @@ impl BoardingPassStorage<JsonWebToken, Cookie, (), String>
             None => cookie,
         };
         self.storage.remove_private(cookie);
+        Ok(())
+    }
+}
+
+impl<'r> BoardingPassStorage<JsonWebToken, Bearer, (), String>
+    for Storage<(), (), JsonWebToken, Bearer, JwtCipher, String>
+{
+    /// The [BoardingPass] is extracted from the [AUTHORIZATION] header.
+    fn boarding_pass(
+        &self,
+        _identifier: (),
+    ) -> anyhow::Result<Option<BoardingPass<JsonWebToken, Bearer>>> {
+        /*
+        let Some(auth_header) =
+            self.storage.headers().get_one(AUTHORIZATION.as_str())
+        else {
+            return Ok(None);
+        };
+        let Some(enc) = Bearer::extract_value(auth_header, None) else {
+            return Ok(None);
+        };
+        let boarding_pass: BoardingPass<JsonWebToken, Bearer> =
+            self.cipher.decode(&enc)?;
+        Ok(Some(boarding_pass))
+        */
+        Ok(None)
+    }
+    fn store_boarding_pass(
+        &self,
+        boarding_pass: &BoardingPass<JsonWebToken, Bearer>,
+    ) -> anyhow::Result<String> {
+        let token = self
+            .cipher
+            .encode(boarding_pass)
+            .map_err(|e| anyhow!("{e}"))?;
+        Ok(token)
+    }
+    /// In the case of usage with [Cookie](RocketCookie), the identifier is not used. Instead, the
+    /// given name of the [cookie_template](CookieStorageOptions::cookie_template) is used.
+    fn remove_boarding_pass(&self, _identifier: ()) -> anyhow::Result<()> {
         Ok(())
     }
 }

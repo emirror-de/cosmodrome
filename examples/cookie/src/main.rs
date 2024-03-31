@@ -1,19 +1,23 @@
 use cosmodrome::{
+    auth_type::Cookie,
+    boarding_pass::{
+        payloads::JsonWebToken,
+        BoardingPass,
+    },
+    ciphering::JwtCipher,
     gate::{
         Gate,
         JwtCookieGate,
     },
     passport::{
-        MemoryPassportRegister,
         Passport,
         PassportType,
     },
-    BoardingPass,
-    Cookie,
-    CookieStorageOptions,
-    JsonWebToken,
-    JwtCipher,
-    Storage,
+    passport_register::MemoryPassportRegister,
+    storage::{
+        CookieStorageOptions,
+        Storage,
+    },
     Ticket,
 };
 use rocket::{

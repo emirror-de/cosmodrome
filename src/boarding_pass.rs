@@ -2,10 +2,19 @@
 use crate::{
     auth_type::{
         AuthType,
+        Bearer,
         Cookie,
     },
-    ciphering::JwtCipher,
+    ciphering::{
+        Ciphering,
+        JwtCipher,
+    },
     passport::Passport,
+    storage::{
+        BoardingPassStorage,
+        CookieStorageOptions,
+        Storage,
+    },
 };
 use anyhow::anyhow;
 use chrono::TimeDelta;
@@ -39,6 +48,18 @@ pub struct BoardingPass<BPD, T: AuthType> {
 }
 
 impl TryFrom<&Passport> for BoardingPass<JsonWebToken, Cookie> {
+    type Error = anyhow::Error;
+    fn try_from(value: &Passport) -> Result<Self, Self::Error> {
+        let valid =
+            TimeDelta::try_weeks(1).ok_or(anyhow!("TimeDelta overflow."))?;
+        Ok(Self {
+            data: JsonWebToken::new(value, valid),
+            phantom_auth: PhantomData,
+        })
+    }
+}
+
+impl TryFrom<&Passport> for BoardingPass<JsonWebToken, Bearer> {
     type Error = anyhow::Error;
     fn try_from(value: &Passport) -> Result<Self, Self::Error> {
         let valid =
@@ -86,18 +107,16 @@ impl<'r> FromRequest<'r> for BoardingPass<JsonWebToken, Cookie> {
     }
 }
 
-/*
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for BoardingPassOld<Bearer> {
+impl<'r> FromRequest<'r> for BoardingPass<JsonWebToken, Bearer> {
     type Error = anyhow::Error;
 
     async fn from_request(
         request: &'r Request<'_>,
     ) -> Outcome<Self, Self::Error> {
-        use crate::gate::BoardingPassDecoder;
-        let Some(gate) = request.rocket().state::<MemoryGate>() else {
+        let Some(cipher) = request.rocket().state::<JwtCipher>() else {
             log::error!(
-                "No MemoryGate managed by rocket. Please create an instance \
+                "No JwtCipher managed by rocket. Please create an instance \
                  and manage it with rocket."
             );
             return Outcome::Forward(Status::InternalServerError);
@@ -110,15 +129,13 @@ impl<'r> FromRequest<'r> for BoardingPassOld<Bearer> {
                 anyhow!("No Authorization header available."),
             ));
         };
-        let user = if auth.starts_with("Bearer ") {
-            let token = auth.strip_prefix("Bearer ").unwrap();
-            gate.decode(token)
-        } else {
+        let Some(user) = Bearer::extract_value(auth, None) else {
             return Outcome::Error((
                 Status::Unauthorized,
                 anyhow!("Not a valid Bearer authorization header."),
             ));
         };
+        let user = cipher.decode(&user);
         match user {
             Err(e) => {
                 return Outcome::Error((Status::Unauthorized, anyhow!("{e}")));
@@ -127,4 +144,3 @@ impl<'r> FromRequest<'r> for BoardingPassOld<Bearer> {
         }
     }
 }
-*/
