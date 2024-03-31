@@ -15,13 +15,10 @@ use crate::{
     },
 };
 use anyhow::anyhow;
-use http::header::AUTHORIZATION;
-use rocket::{
-    http::{
-        Cookie as RocketCookie,
-        CookieJar,
-    },
-    Request,
+
+use rocket::http::{
+    Cookie as RocketCookie,
+    CookieJar,
 };
 use std::marker::PhantomData;
 
@@ -167,19 +164,6 @@ impl<'r> BoardingPassStorage<JsonWebToken, Bearer, (), String>
         &self,
         _identifier: (),
     ) -> anyhow::Result<Option<BoardingPass<JsonWebToken, Bearer>>> {
-        /*
-        let Some(auth_header) =
-            self.storage.headers().get_one(AUTHORIZATION.as_str())
-        else {
-            return Ok(None);
-        };
-        let Some(enc) = Bearer::extract_value(auth_header, None) else {
-            return Ok(None);
-        };
-        let boarding_pass: BoardingPass<JsonWebToken, Bearer> =
-            self.cipher.decode(&enc)?;
-        Ok(Some(boarding_pass))
-        */
         Ok(None)
     }
     fn store_boarding_pass(
