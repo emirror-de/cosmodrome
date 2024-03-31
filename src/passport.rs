@@ -1,4 +1,4 @@
-//! Account data model.
+//! Passports are the identification card for a user. Traditionally known as `Account`.
 use anyhow::anyhow;
 use argon2::{
     password_hash::{
@@ -17,14 +17,19 @@ use chrono::{
     Utc,
 };
 pub use passport_type::PassportType;
+pub use register::{
+    MemoryPassportRegister,
+    PassportRegister,
+};
 use rocket::serde::{
     Deserialize,
     Serialize,
 };
 
 mod passport_type;
+mod register;
 
-/// Defines a user account of a service.
+/// Defines a passport of a user.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct Passport {

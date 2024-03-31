@@ -1,15 +1,19 @@
 use cosmodrome::{
     gate::{
-        memory::{
-            MemoryGate,
-            MemoryGateOptions,
-        },
-        Cookie,
         Gate,
+        JwtCookieGate,
+    },
+    passport::{
+        MemoryPassportRegister,
+        Passport,
+        PassportType,
     },
     BoardingPass,
-    Passport,
-    PassportType,
+    Cookie,
+    CookieStorageOptions,
+    JsonWebToken,
+    JwtCipher,
+    Storage,
     Ticket,
 };
 use rocket::{
@@ -34,10 +38,20 @@ async fn index() -> Option<NamedFile> {
 #[post("/login", format = "json", data = "<credentials>")]
 async fn login(
     credentials: Json<Ticket>,
-    gate: &State<MemoryGate>,
+    register: &State<MemoryPassportRegister>,
+    cipher: &State<JwtCipher>,
     cookies: &CookieJar<'_>,
 ) -> Status {
-    match gate.login(credentials.into_inner(), cookies) {
+    let storage = Storage::new(
+        cookies,
+        CookieStorageOptions::default(),
+        cipher.inner().to_owned(),
+    );
+    match JwtCookieGate::login(
+        credentials.into_inner(),
+        register.inner(),
+        &storage,
+    ) {
         Ok(_) => Status::Ok,
         Err(e) => {
             log::error!("{e}");
@@ -47,26 +61,24 @@ async fn login(
 }
 
 #[get("/private")]
-async fn private(user: BoardingPass<Cookie>) -> String {
+async fn private(user: BoardingPass<JsonWebToken, Cookie>) -> String {
     format!("{user:#?}")
 }
 
 #[launch]
 fn simple_login() -> _ {
-    // We can customize the settings of the gate before launch.
-    let gate_settings = MemoryGateOptions::default();
-    let gate = MemoryGate::from((
-        vec![Passport::new(
-            "simple_user",
-            "somepassword",
-            &["simple_service"],
-            PassportType::Admin,
-        )
-        .unwrap()],
-        gate_settings,
-    ));
+    // We need to have a global register where all users are stored.
+    let register = MemoryPassportRegister::from(vec![Passport::new(
+        "simple_user",
+        "somepassword",
+        &["simple_service"],
+        PassportType::Admin,
+    )
+    .unwrap()]);
+    let cipher = JwtCipher::random();
 
     rocket::build()
         .mount("/", routes![index, private, login])
-        .manage(gate)
+        .manage(register)
+        .manage(cipher)
 }

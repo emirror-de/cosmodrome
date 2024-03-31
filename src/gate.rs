@@ -1,71 +1,125 @@
 //! A [Gate] is the main entrance to your [rocket]. It provides methods for access control, as well
 //! as login and logout.
-use std::fmt::Display;
-
 use crate::{
-    BoardingPass,
-    Passport,
+    auth_type::{
+        AuthType,
+        Cookie,
+    },
+    boarding_pass::{
+        BoardingPass,
+        BoardingPassStorage,
+        JsonWebToken,
+    },
+    passport::PassportRegister,
+    Ticket,
 };
 use anyhow::anyhow;
+use std::marker::PhantomData;
 
-pub mod memory;
-
-/// The gate type.
-pub trait GateType {}
-
-/// Defines a type of gate that deals with cookies.
-#[derive(Debug)]
-pub struct Cookie;
-impl GateType for Cookie {}
-
-/// Defines a type of gate that deals with bearer tokens.
-#[derive(Debug)]
-pub struct Bearer;
-impl GateType for Bearer {}
-
-/// The security check is responsible for the verification of a user at the [Gate].
-pub trait SecurityCheck<C> {
-    /// Verifies the given credentials and returns the user passport on success.
-    fn verify_credentials(&self, credentials: C) -> anyhow::Result<Passport>;
+/// A [Gate] is able to verify, grant and deny access to a [rocket].
+pub trait Gate<BPD, T, ID, ENC>
+where
+    T: AuthType,
+{
+    /// Checks if the given [Ticket] is valid and generates a [BoardingPass] on success.
+    fn login<BPS, PR>(
+        ticket: Ticket,
+        passport_register: &PR,
+        boarding_pass_storage: &BPS,
+    ) -> anyhow::Result<String>
+    where
+        BPS: BoardingPassStorage<BPD, T, ID, ENC>,
+        PR: PassportRegister;
 }
 
-/// Responsible for generating the [BoardingPass] and its corresponding token.
-pub trait BoardingPassGenerator<T: GateType> {
-    /// Generates the [BoardingPass] based on the given [Passport] (usually returned by [SecurityCheck::verify]).
-    fn generate_boarding_pass(
-        &self,
-        passport: &Passport,
-    ) -> anyhow::Result<BoardingPass<T>> {
-        BoardingPass::<T>::new(passport)
+/// A gate where the [BoardingPass] is stored as [jsonwebtoken] in a cookie.
+pub struct JwtCookieGate;
+
+impl Gate<JsonWebToken, Cookie, (), String> for JwtCookieGate {
+    fn login<BPS, PR>(
+        ticket: Ticket,
+        passport_register: &PR,
+        boarding_pass_storage: &BPS,
+    ) -> anyhow::Result<String>
+    where
+        BPS: BoardingPassStorage<JsonWebToken, Cookie, (), String>,
+        PR: PassportRegister,
+    {
+        let Some(passport) = passport_register.verify_credentials(&ticket)?
+        else {
+            return Err(anyhow!(
+                "No passport found for ticket with id: {}",
+                ticket.id
+            ));
+        };
+        let boarding_pass: BoardingPass<JsonWebToken, Cookie> =
+            BoardingPass::try_from(&passport)?;
+        boarding_pass_storage.store_boarding_pass(&boarding_pass)
     }
 }
 
-/// If required, the [BoardingPass] can be stored in your storage for later
-/// use. This can be a database, cookie or similar.
-pub trait BoardingPassStorage<T: GateType, S, I> {
-    /// Returns a reference to the [BoardingPass] in your storage.
-    fn boarding_pass(
-        &self,
-        identifier: I,
-        storage: S,
-    ) -> anyhow::Result<Option<BoardingPass<T>>>;
-    /// Stores the given [BoardingPass] in your storage.
-    fn store_boarding_pass(
-        &self,
-        boarding_pass: &BoardingPass<T>,
-        storage: S,
-    ) -> anyhow::Result<()>;
-    /// Removes the [BoardingPass] from your storage.
-    fn remove_boarding_pass(
-        &self,
-        identifier: I,
-        storage: S,
-    ) -> anyhow::Result<()>;
+/*
+/// A [Gate] is able to verify, grant and deny access to a [rocket].
+pub struct Gate<PR, BPD, AT, CE>
+where
+    PR: PassportRegister,
+    AT: AuthType,
+{
+    /// The global passport register.
+    pub passport_register: PR,
+    phantom_bpd: PhantomData<BPD>,
+    phantom_ce: PhantomData<CE>,
+    phantom_at: PhantomData<AT>,
 }
 
+impl<PR, BPD, AT, CE> Gate<PR, BPD, AT, CE>
+where
+    PR: PassportRegister,
+    AT: AuthType,
+{
+    /// Creates a new [Gate] instance.
+    pub fn new(passport_register: PR) -> Self {
+        Self {
+            passport_register,
+            phantom_bpd: PhantomData,
+            phantom_ce: PhantomData,
+            phantom_at: PhantomData,
+        }
+    }
+}
+
+impl<PR> Gate<PR, JsonWebToken, Cookie, String>
+where
+    PR: PassportRegister,
+{
+    /// Checks if the given [Ticket] is valid and generates a [BoardingPass] on success.
+    pub fn login<BPS, PR>(
+        &self,
+        ticket: Ticket,
+        boarding_pass_storage: BPS,
+    ) -> anyhow::Result<String>
+    where
+        BPS: BoardingPassStorage<JsonWebToken, Cookie, &'static str, String>,
+    {
+        let Some(passport) =
+            self.passport_register.verify_credentials(&ticket)?
+        else {
+            return Err(anyhow!(
+                "No passport found for ticket with id: {}",
+                ticket.id
+            ));
+        };
+        let boarding_pass: BoardingPass<JsonWebToken, Cookie> =
+            BoardingPass::try_from(&passport)?;
+        boarding_pass_storage.store_boarding_pass(&boarding_pass)
+    }
+}
+*/
+
+/*
 /// Provides an interface an account provider. This can be anything that contains
 /// the user information for example a database or a file.
-pub trait Gate<C, T: GateType, S, I, EO, EI, ERR>:
+pub trait GateTrait<C, T: GateType, S, I, EO, EI, ERR>:
     SecurityCheck<C>
     + BoardingPassGenerator<T>
     + BoardingPassStorage<T, S, I>
@@ -105,20 +159,4 @@ where
     }
 }
 
-/// If your [BoardingPass] is too big to carry, the encoder is ready to compress its size. This can be by creating a token or anything else you require.
-pub trait BoardingPassEncoder<T: GateType, O, E>
-where
-    E: Display,
-{
-    /// Encodes the given [BoardingPass] using the given properties.
-    fn encode(&self, boarding_pass: &BoardingPass<T>) -> Result<O, E>;
-}
-
-/// If your [BoardingPass] has been encoded, you can decode it with this trait.
-pub trait BoardingPassDecoder<T: GateType, I, E>
-where
-    E: Display,
-{
-    /// Decodoes the given [BoardingPass] using the given properties.
-    fn decode(&self, encoded_value: I) -> Result<BoardingPass<T>, E>;
-}
+*/

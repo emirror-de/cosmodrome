@@ -1,10 +1,10 @@
+//! A [BoardingPass] is the piece you need to be granted access to a [rocket].
 use crate::{
-    gate::{
-        memory::MemoryGate,
-        Bearer,
+    auth_type::{
+        AuthType,
         Cookie,
-        GateType,
     },
+    gate::Gate,
     passport::Passport,
 };
 use anyhow::anyhow;
@@ -12,6 +12,12 @@ use chrono::{
     TimeDelta,
     Utc,
 };
+pub use ciphering::{
+    Ciphering,
+    JwtCipher,
+};
+pub use jwt::JsonWebToken;
+use log::error;
 use rocket::{
     http::Status,
     request::{
@@ -25,84 +31,78 @@ use rocket::{
     },
 };
 use std::marker::PhantomData;
+pub use storage::{
+    BoardingPassStorage,
+    CookieStorageOptions,
+    Storage,
+};
 
-/// The claims that are stored in the [`jsonwebtoken`].
+pub mod ciphering;
+mod jwt;
+mod storage;
+
+/// The [BoardingPass] is your access card to a [rocket].
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
-pub struct BoardingPass<T: GateType> {
-    /// The passport of the user.
-    pub user: Passport,
-    exp: usize,
+pub struct BoardingPass<BPD, T: AuthType> {
+    /// The actual boarding pass data, simultaneously defining the type of [BoardinPass].
+    #[serde(flatten)]
+    pub data: BPD,
     #[serde(skip)]
-    phantom_data: PhantomData<T>,
+    phantom_auth: PhantomData<T>,
 }
 
-impl<T: GateType> BoardingPass<T> {
-    /// Creates a new claim for the given account with a validity of one week.
-    /// Use [with_validity](Self::with_validity) for adjustment of the valid timespan.
-    pub fn new(user: &Passport) -> anyhow::Result<Self> {
-        let exp = Utc::now();
+impl TryFrom<&Passport> for BoardingPass<JsonWebToken, Cookie> {
+    type Error = anyhow::Error;
+    fn try_from(value: &Passport) -> Result<Self, Self::Error> {
         let valid =
             TimeDelta::try_weeks(1).ok_or(anyhow!("TimeDelta overflow."))?;
-        let exp = exp + valid;
         Ok(Self {
-            user: user.clone(),
-            exp: exp.timestamp() as usize,
-            phantom_data: PhantomData,
+            data: JsonWebToken::new(value, valid),
+            phantom_auth: PhantomData,
         })
-    }
-
-    /// Sets the validity of the login.
-    pub fn with_validity(self, value: TimeDelta) -> Self {
-        let exp = Utc::now() + value;
-        Self {
-            exp: exp.timestamp() as usize,
-            ..self
-        }
-    }
-
-    /// `False` if the login is still valid.
-    pub fn is_login_expired(&self) -> bool {
-        self.exp > Utc::now().timestamp() as usize
     }
 }
 
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for BoardingPass<Cookie> {
+impl<'r> FromRequest<'r> for BoardingPass<JsonWebToken, Cookie> {
     type Error = anyhow::Error;
 
     async fn from_request(
         request: &'r Request<'_>,
     ) -> Outcome<Self, Self::Error> {
-        use crate::gate::BoardingPassDecoder;
-        let Some(gate) = request.rocket().state::<MemoryGate>() else {
+        let Some(cipher) = request.rocket().state::<JwtCipher>() else {
             log::error!(
-                "No MemoryGate managed by rocket. Please create an instance \
-                 and manage it with rocket."
+                "No cosmodrome JwtCipher managed by rocket. Please create an \
+                 instance and manage it with rocket."
             );
             return Outcome::Forward(Status::InternalServerError);
         };
-        let cookies = request.cookies();
-
-        let auth = cookies.get_private(gate.options.cookie_name());
-        let Some(auth) = &auth else {
-            return Outcome::Error((
-                Status::Unauthorized,
-                anyhow!("No auth cookie available"),
-            ));
-        };
-        let user = gate.decode(auth.value());
-        match user {
+        let storage = Storage::new(
+            request.cookies(),
+            CookieStorageOptions::default(),
+            cipher.clone(),
+        );
+        let user = match storage.boarding_pass(()) {
             Err(e) => {
-                return Outcome::Error((Status::Unauthorized, anyhow!("{e}")));
+                error!("{e}");
+                return Outcome::Forward(Status::InternalServerError);
             }
-            Ok(u) => Outcome::Success(u),
+            Ok(u) => u,
+        };
+        match user {
+            None => Outcome::Error((
+                Status::Unauthorized,
+                anyhow!("User not found."),
+            )),
+            Some(u) => Outcome::Success(u),
         }
     }
 }
 
+/*
 #[rocket::async_trait]
-impl<'r> FromRequest<'r> for BoardingPass<Bearer> {
+impl<'r> FromRequest<'r> for BoardingPassOld<Bearer> {
     type Error = anyhow::Error;
 
     async fn from_request(
@@ -141,3 +141,4 @@ impl<'r> FromRequest<'r> for BoardingPass<Bearer> {
         }
     }
 }
+*/

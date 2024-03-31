@@ -6,12 +6,12 @@ use super::{
     BoardingPassGenerator,
     BoardingPassStorage,
     Cookie,
-    Gate,
+    GateTrait,
     GateType,
     SecurityCheck,
 };
 use crate::{
-    BoardingPass,
+    BoardingPassOld,
     Passport,
     Ticket,
 };
@@ -162,19 +162,19 @@ impl BoardingPassStorage<Cookie, &CookieJar<'_>, ()> for MemoryGate {
         &self,
         _identifier: (),
         storage: &CookieJar<'_>,
-    ) -> anyhow::Result<Option<BoardingPass<Cookie>>> {
+    ) -> anyhow::Result<Option<BoardingPassOld<Cookie>>> {
         let Some(boarding_pass) =
             storage.get_private(self.options.cookie_name())
         else {
             return Ok(None);
         };
-        let boarding_pass: BoardingPass<Cookie> =
+        let boarding_pass: BoardingPassOld<Cookie> =
             self.decode(boarding_pass.value())?;
         Ok(Some(boarding_pass))
     }
     fn store_boarding_pass(
         &self,
-        boarding_pass: &BoardingPass<Cookie>,
+        boarding_pass: &BoardingPassOld<Cookie>,
         storage: &CookieJar<'_>,
     ) -> anyhow::Result<()> {
         let token = self.encode(boarding_pass).map_err(|e| anyhow!("{e}"))?;
@@ -202,7 +202,7 @@ impl BoardingPassStorage<Cookie, &CookieJar<'_>, ()> for MemoryGate {
     }
 }
 impl
-    Gate<
+    GateTrait<
         Ticket,
         Cookie,
         &CookieJar<'_>,
@@ -229,12 +229,12 @@ impl BoardingPassStorage<Bearer, (), ()> for MemoryGate {
         &self,
         _identifier: (),
         _storage: (),
-    ) -> anyhow::Result<Option<BoardingPass<Bearer>>> {
+    ) -> anyhow::Result<Option<BoardingPassOld<Bearer>>> {
         Ok(None)
     }
     fn store_boarding_pass(
         &self,
-        _boarding_pass: &BoardingPass<Bearer>,
+        _boarding_pass: &BoardingPassOld<Bearer>,
         _storage: (),
     ) -> anyhow::Result<()> {
         Ok(())
@@ -247,7 +247,8 @@ impl BoardingPassStorage<Bearer, (), ()> for MemoryGate {
         Ok(())
     }
 }
-impl Gate<Ticket, Bearer, (), (), String, &str, jsonwebtoken::errors::Error>
+impl
+    GateTrait<Ticket, Bearer, (), (), String, &str, jsonwebtoken::errors::Error>
     for MemoryGate
 {
 }
@@ -259,7 +260,7 @@ impl<T: GateType> BoardingPassEncoder<T, String, jsonwebtoken::errors::Error>
     /// [jsonwebtoken].
     fn encode(
         &self,
-        boarding_pass: &BoardingPass<T>,
+        boarding_pass: &BoardingPassOld<T>,
     ) -> Result<String, jsonwebtoken::errors::Error> {
         let web_token = jsonwebtoken::encode(
             &Header::default(),
@@ -280,8 +281,8 @@ impl<T: GateType> BoardingPassDecoder<T, &str, jsonwebtoken::errors::Error>
     fn decode(
         &self,
         token: &str,
-    ) -> Result<BoardingPass<T>, jsonwebtoken::errors::Error> {
-        let claims = jsonwebtoken::decode::<BoardingPass<T>>(
+    ) -> Result<BoardingPassOld<T>, jsonwebtoken::errors::Error> {
+        let claims = jsonwebtoken::decode::<BoardingPassOld<T>>(
             &token,
             &DecodingKey::from_secret(
                 self.options.authentication_secret().as_bytes(),

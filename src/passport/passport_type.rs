@@ -3,7 +3,7 @@ use rocket::serde::{
     Serialize,
 };
 
-/// Indicates the access level of an account.
+/// Defines the level of access of a [Passport](super::Passport).
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[serde(crate = "rocket::serde")]
 pub enum PassportType {
