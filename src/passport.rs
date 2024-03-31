@@ -17,17 +17,12 @@ use chrono::{
     Utc,
 };
 pub use passport_type::PassportType;
-pub use register::{
-    MemoryPassportRegister,
-    PassportRegister,
-};
 use rocket::serde::{
     Deserialize,
     Serialize,
 };
 
 mod passport_type;
-mod register;
 
 /// Defines a passport of a user.
 #[derive(Serialize, Deserialize, Clone, Debug)]

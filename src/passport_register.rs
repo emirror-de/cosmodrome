@@ -1,11 +1,11 @@
-use std::collections::HashMap;
-
+//! A [PassportRegister] is a data structure that has access to all the registered users.
 use crate::{
     passport::Passport,
     Ticket,
 };
 use anyhow::anyhow;
 use log::debug;
+use std::collections::HashMap;
 
 /// The passport register contains a collection of passports that are
 /// known to your application.

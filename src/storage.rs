@@ -1,11 +1,18 @@
-use super::{
-    ciphering::Ciphering,
-    jwt::JsonWebToken,
-    BoardingPass,
-    Cookie,
-    JwtCipher,
+//! Provides storage implementations for different types of [Gate](crate::gate::Gate)s.
+use crate::{
+    auth_type::{
+        AuthType,
+        Cookie,
+    },
+    boarding_pass::{
+        payloads::JsonWebToken,
+        BoardingPass,
+    },
+    ciphering::{
+        Ciphering,
+        JwtCipher,
+    },
 };
-use crate::auth_type::AuthType;
 use anyhow::anyhow;
 use rocket::http::{
     Cookie as RocketCookie,
@@ -33,10 +40,10 @@ where
     fn remove_boarding_pass(&self, identifier: ID) -> anyhow::Result<()>;
 }
 
-/// Options required for the [Storage] to work.
+/// Options required for the [Storage] to work when used with [Cookie] [AuthType].
 pub struct CookieStorageOptions<'a> {
     /// The cookie template that is used to store the [BoardingPass].
-    cookie_template: RocketCookie<'a>,
+    pub cookie_template: RocketCookie<'a>,
 }
 
 impl<'a> Default for CookieStorageOptions<'a> {
@@ -104,7 +111,7 @@ impl BoardingPassStorage<JsonWebToken, Cookie, (), String>
     >
 {
     /// In the case of usage with [Cookie](RocketCookie), the identifier is not used. Instead, the
-    /// given name of the [Self::cookie_template] is used.
+    /// given name of the [cookie_template](CookieStorageOptions::cookie_template) is used.
     fn boarding_pass(
         &self,
         _identifier: (),
@@ -133,7 +140,7 @@ impl BoardingPassStorage<JsonWebToken, Cookie, (), String>
         Ok(token)
     }
     /// In the case of usage with [Cookie](RocketCookie), the identifier is not used. Instead, the
-    /// given name of the [Self::cookie_template] is used.
+    /// given name of the [cookie_template](CookieStorageOptions::cookie_template) is used.
     fn remove_boarding_pass(&self, _identifier: ()) -> anyhow::Result<()> {
         let cookie = RocketCookie::build(
             self.options.cookie_template.name().to_string(),

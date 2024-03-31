@@ -4,13 +4,13 @@ use crate::{
         AuthType,
         Cookie,
     },
+    ciphering::JwtCipher,
     passport::Passport,
 };
 use anyhow::anyhow;
 use chrono::TimeDelta;
-use ciphering::JwtCipher;
-pub use jwt::JsonWebToken;
 use log::error;
+use payloads::JsonWebToken;
 use rocket::{
     http::Status,
     request::{
@@ -24,21 +24,14 @@ use rocket::{
     },
 };
 use std::marker::PhantomData;
-pub use storage::{
-    BoardingPassStorage,
-    CookieStorageOptions,
-    Storage,
-};
 
-pub mod ciphering;
-mod jwt;
-mod storage;
+pub mod payloads;
 
 /// The [BoardingPass] is your access card to a [rocket].
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct BoardingPass<BPD, T: AuthType> {
-    /// The actual boarding pass data, simultaneously defining the type of [BoardinPass].
+    /// The actual boarding pass data, simultaneously defining the type of [BoardingPass].
     #[serde(flatten)]
     pub data: BPD,
     #[serde(skip)]

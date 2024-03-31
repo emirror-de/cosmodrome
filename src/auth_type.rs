@@ -3,7 +3,7 @@
 /// The auth type to be used.
 pub trait AuthType {}
 
-/// Using the [Cookie] [AuthType] requires a [JwtCipher] in
+/// Using the [Cookie] [AuthType] requires a [JwtCipher](crate::ciphering::JwtCipher) in
 /// [rocket]s global state.
 #[derive(Debug)]
 pub struct Cookie;

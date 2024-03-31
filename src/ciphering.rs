@@ -1,9 +1,11 @@
 //! Ciphering methods for en- and decoding a [BoardingPass].
-use super::{
-    jwt::JsonWebToken,
-    BoardingPass,
+use crate::{
+    auth_type::AuthType,
+    boarding_pass::{
+        payloads::JsonWebToken,
+        BoardingPass,
+    },
 };
-use crate::auth_type::AuthType;
 use anyhow::anyhow;
 use jsonwebtoken::{
     DecodingKey,
@@ -11,7 +13,6 @@ use jsonwebtoken::{
     Header,
     Validation,
 };
-
 
 /// Methods for encoding and decoding a [BoardingPass].
 pub trait Ciphering<BPD, AT, CE>
@@ -30,7 +31,7 @@ where
     ) -> anyhow::Result<BoardingPass<BPD, AT>>;
 }
 
-/// Has the ability to en- and decode a [BoardingPass].
+/// Required to en- and decode a [BoardingPass] that contains a [JsonWebToken] as payload.
 #[derive(Clone)]
 pub struct JwtCipher {
     enc_key: EncodingKey,

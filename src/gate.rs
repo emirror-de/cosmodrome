@@ -6,11 +6,11 @@ use crate::{
         Cookie,
     },
     boarding_pass::{
+        payloads::JsonWebToken,
         BoardingPass,
-        BoardingPassStorage,
-        JsonWebToken,
     },
-    passport::PassportRegister,
+    passport_register::PassportRegister,
+    storage::BoardingPassStorage,
     Ticket,
 };
 use anyhow::anyhow;

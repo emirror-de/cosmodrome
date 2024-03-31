@@ -1,3 +1,4 @@
+//! Different data types that can be used as payload in a [BoardingPass](super::BoardingPass).
 use crate::passport::Passport;
 use chrono::{
     TimeDelta,
@@ -8,7 +9,7 @@ use rocket::serde::{
     Serialize,
 };
 
-/// This can be used as data format for a [BoardingPass].
+/// Defines the content of a [jsonwebtoken], also referred to as `claim`.
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct JsonWebToken {
