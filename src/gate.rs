@@ -15,7 +15,6 @@ use crate::{
 };
 use anyhow::anyhow;
 
-
 /// A [Gate] is able to verify, grant and deny access to a [rocket].
 pub trait Gate<BPD, T, ID, ENC>
 where
@@ -30,6 +29,18 @@ where
     where
         BPS: BoardingPassStorage<BPD, T, ID, ENC>,
         PR: PassportRegister;
+
+    /// Executes a logout of the user.
+    fn logout<BPS>(
+        &self,
+        identifier: ID,
+        boarding_pass_storage: &BPS,
+    ) -> anyhow::Result<()>
+    where
+        BPS: BoardingPassStorage<BPD, T, ID, ENC>,
+    {
+        boarding_pass_storage.remove_boarding_pass(identifier)
+    }
 }
 
 /// A gate where the [BoardingPass] is stored as [jsonwebtoken] in a cookie.
@@ -55,6 +66,18 @@ impl Gate<JsonWebToken, Cookie, (), String> for JwtCookieGate {
         let boarding_pass: BoardingPass<JsonWebToken, Cookie> =
             BoardingPass::try_from(&passport)?;
         boarding_pass_storage.store_boarding_pass(&boarding_pass)
+    }
+
+    /// In case of [Cookie], there is no identifier required as it is already defined in the storage.
+    fn logout<BPS>(
+        &self,
+        identifier: (),
+        boarding_pass_storage: &BPS,
+    ) -> anyhow::Result<()>
+    where
+        BPS: BoardingPassStorage<JsonWebToken, Cookie, (), String>,
+    {
+        boarding_pass_storage.remove_boarding_pass(identifier)
     }
 }
 
