@@ -11,7 +11,7 @@ use jsonwebtoken::{
     Header,
     Validation,
 };
-use std::fmt::Display;
+
 
 /// Methods for encoding and decoding a [BoardingPass].
 pub trait Ciphering<BPD, AT, CE>
@@ -79,7 +79,7 @@ where
         encoded_value: &String,
     ) -> Result<BoardingPass<JsonWebToken, AT>, anyhow::Error> {
         let claims = jsonwebtoken::decode::<BoardingPass<JsonWebToken, AT>>(
-            &encoded_value,
+            encoded_value,
             &self.dec_key,
             &Validation::default(),
         )?;

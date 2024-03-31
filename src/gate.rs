@@ -14,7 +14,7 @@ use crate::{
     Ticket,
 };
 use anyhow::anyhow;
-use std::marker::PhantomData;
+
 
 /// A [Gate] is able to verify, grant and deny access to a [rocket].
 pub trait Gate<BPD, T, ID, ENC>

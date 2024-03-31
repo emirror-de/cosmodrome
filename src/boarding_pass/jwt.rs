@@ -8,7 +8,7 @@ use rocket::serde::{
     Serialize,
 };
 
-/// A [jsonwebtoken] [BoardingPass] implementation.
+/// This can be used as data format for a [BoardingPass].
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(crate = "rocket::serde")]
 pub struct JsonWebToken {
@@ -18,7 +18,7 @@ pub struct JsonWebToken {
 }
 
 impl JsonWebToken {
-    /// Creates a new claim for a [jsonwebtoken].
+    /// Creates a new claim from the given values.
     pub fn new(passport: &Passport, valid_timespan: TimeDelta) -> Self {
         let exp = Utc::now() + valid_timespan;
         Self {

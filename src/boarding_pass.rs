@@ -4,18 +4,11 @@ use crate::{
         AuthType,
         Cookie,
     },
-    gate::Gate,
     passport::Passport,
 };
 use anyhow::anyhow;
-use chrono::{
-    TimeDelta,
-    Utc,
-};
-pub use ciphering::{
-    Ciphering,
-    JwtCipher,
-};
+use chrono::TimeDelta;
+use ciphering::JwtCipher;
 pub use jwt::JsonWebToken;
 use log::error;
 use rocket::{

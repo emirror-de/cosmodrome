@@ -60,7 +60,7 @@ impl Passport {
     ) -> anyhow::Result<Self> {
         Ok(Self {
             id: id.to_string(),
-            password: Self::hash_password(&password)?,
+            password: Self::hash_password(password)?,
             services: services
                 .iter()
                 .map(|s| s.to_string())

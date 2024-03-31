@@ -3,7 +3,7 @@ use serde::{
     Serialize,
 };
 
-/// Contains the credentials for a simple login.
+/// Defines credentials for a simple login based on an `id` and a `secret`.
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Ticket {
     /// The identification of the user, eg. a username.

@@ -1,7 +1,7 @@
 use super::{
+    ciphering::Ciphering,
     jwt::JsonWebToken,
     BoardingPass,
-    Ciphering,
     Cookie,
     JwtCipher,
 };
