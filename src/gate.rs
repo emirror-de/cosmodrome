@@ -68,18 +68,6 @@ impl Gate<JsonWebToken, Cookie, (), String> for JwtCookieGate {
             BoardingPass::try_from(&passport)?;
         boarding_pass_storage.store_boarding_pass(&boarding_pass)
     }
-
-    /// In case of [Cookie], there is no identifier required as it is already defined in the storage.
-    fn logout<BPS>(
-        &self,
-        identifier: (),
-        boarding_pass_storage: &BPS,
-    ) -> anyhow::Result<()>
-    where
-        BPS: BoardingPassStorage<JsonWebToken, Cookie, (), String>,
-    {
-        boarding_pass_storage.remove_boarding_pass(identifier)
-    }
 }
 
 /// A gate where the [BoardingPass] is stored as [jsonwebtoken] in the `Authorization` `Bearer` header.
@@ -105,17 +93,5 @@ impl Gate<JsonWebToken, Bearer, (), String> for JwtBearerGate {
         let boarding_pass: BoardingPass<JsonWebToken, Bearer> =
             BoardingPass::try_from(&passport)?;
         boarding_pass_storage.store_boarding_pass(&boarding_pass)
-    }
-
-    /// In case of [Cookie], there is no identifier required as it is already defined in the storage.
-    fn logout<BPS>(
-        &self,
-        identifier: (),
-        boarding_pass_storage: &BPS,
-    ) -> anyhow::Result<()>
-    where
-        BPS: BoardingPassStorage<JsonWebToken, Bearer, (), String>,
-    {
-        boarding_pass_storage.remove_boarding_pass(identifier)
     }
 }
