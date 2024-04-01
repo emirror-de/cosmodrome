@@ -159,7 +159,7 @@ impl BoardingPassStorage<JsonWebToken, Cookie, (), String>
 impl<'r> BoardingPassStorage<JsonWebToken, Bearer, (), String>
     for Storage<(), (), JsonWebToken, Bearer, JwtCipher, String>
 {
-    /// The [BoardingPass] is extracted from the [AUTHORIZATION] header.
+    /// The [BoardingPass] is extracted from the [AUTHORIZATION](http::header::AUTHORIZATION) header.
     fn boarding_pass(
         &self,
         _identifier: (),
