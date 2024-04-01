@@ -33,7 +33,6 @@ where
 
     /// Executes a logout of the user.
     fn logout<BPS>(
-        &self,
         identifier: ID,
         boarding_pass_storage: &BPS,
     ) -> anyhow::Result<()>
