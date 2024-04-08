@@ -1,4 +1,4 @@
-//! Different auth types that are available.
+//! Different auth methods, eg. `Cookie` or `Bearer`.
 
 /// The auth type to be used.
 pub trait AuthType {}
