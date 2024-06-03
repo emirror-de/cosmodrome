@@ -302,12 +302,14 @@ dependencies = [
  "anyhow",
  "argon2",
  "chrono",
+ "cookie",
  "http 1.1.0",
  "jsonwebtoken",
  "log",
  "rand",
  "rocket",
  "serde",
+ "time",
 ]
 
 [[package]]

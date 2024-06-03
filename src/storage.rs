@@ -49,6 +49,12 @@ pub struct CookieStorageOptions<'a> {
 }
 
 impl<'a> Default for CookieStorageOptions<'a> {
+    /// Default implementation:
+    ///
+    /// - Path: `/`
+    /// - Secure: `true`
+    /// - Same site: [SameSite::Strict](rocket::http::SameSite::Strict)
+    /// - Expires: `1 week`
     fn default() -> Self {
         Self {
             cookie_template: RocketCookie::build((
@@ -58,6 +64,11 @@ impl<'a> Default for CookieStorageOptions<'a> {
             .path("/")
             .secure(true)
             .same_site(rocket::http::SameSite::Strict)
+            .expires({
+                let one_week = time::OffsetDateTime::now_utc()
+                    + core::time::Duration::from_secs(604800);
+                cookie::Expiration::from(one_week)
+            })
             .build(),
         }
     }
