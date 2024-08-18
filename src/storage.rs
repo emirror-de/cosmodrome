@@ -81,7 +81,7 @@ impl<'a> CookieStorageOptions<'a> {
     }
 }
 
-/// A default storage for [BoardingPass].
+/// A generic storage for [BoardingPass].
 pub struct Storage<S, SO, BPD, AT, C, CE>
 where
     C: Ciphering<BPD, AT, CE>,
