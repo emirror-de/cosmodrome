@@ -1,5 +1,5 @@
 //! Ciphering methods for en- and decoding a [BoardingPass].
-use crate::{
+use super::{
     auth_type::AuthType,
     boarding_pass::{
         payloads::JsonWebToken,

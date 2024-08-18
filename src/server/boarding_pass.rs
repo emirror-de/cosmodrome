@@ -1,5 +1,5 @@
 //! A [BoardingPass] is the piece you need to be granted access to a [rocket].
-use crate::{
+use super::{
     auth_type::{
         AuthType,
         Bearer,

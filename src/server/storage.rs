@@ -1,5 +1,5 @@
 //! Provides storage implementations for different types of [Gate](crate::gate::Gate)s.
-use crate::{
+use super::{
     auth_type::{
         AuthType,
         Bearer,
@@ -15,7 +15,6 @@ use crate::{
     },
 };
 use anyhow::anyhow;
-
 use rocket::http::{
     Cookie as RocketCookie,
     CookieJar,
@@ -41,6 +40,30 @@ where
     /// Removes the [BoardingPass] from your storage.
     fn remove_boarding_pass(&self, identifier: ID) -> anyhow::Result<()>;
 }
+
+/*
+/// Thin wrapper around [Storage] for easier creation and correct type selection.
+pub struct StorageBuilder;
+
+impl StorageBuilder {
+    /// Creates a storage that uses `[Cookie](rocket::http::Cookie)` as backend
+    /// and [JsonWebToken] as payload.
+    pub fn jsonwebtoken_cookie(
+        storage: &CookieJar<'_>,
+        options: CookieStorageOptions,
+        cipher: JwtCipher,
+    ) -> Storage<
+        &CookieJar<'_>,
+        CookieStorageOptions<'static>,
+        JsonWebToken,
+        Cookie,
+        JwtCipher,
+        String,
+    > {
+        Storage::new(storage, options, cipher)
+    }
+}
+*/
 
 /// Options required for the [Storage] to work when used with [Cookie] [AuthType].
 pub struct CookieStorageOptions<'a> {

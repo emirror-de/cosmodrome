@@ -1,21 +1,15 @@
 #![deny(missing_docs)]
+#![feature(doc_cfg)]
 #![doc = include_str!("../README.md")]
 
-pub mod auth_type;
+#[cfg(feature = "server")]
+#[doc(cfg(feature = "server"))]
+pub(crate) mod server;
+#[cfg(feature = "server")]
+#[doc(cfg(feature = "server"))]
+pub use server::*;
 
-pub use ticket::Ticket;
-
-#[cfg(feature = "server")]
-pub mod boarding_pass;
-#[cfg(feature = "server")]
-pub mod ciphering;
-#[cfg(feature = "server")]
-pub mod gate;
-#[cfg(feature = "server")]
-pub mod passport;
-#[cfg(feature = "server")]
-pub mod passport_register;
-#[cfg(feature = "server")]
-pub mod storage;
 #[cfg(feature = "client")]
+#[doc(cfg(feature = "client"))]
 mod ticket;
+pub use ticket::Ticket;

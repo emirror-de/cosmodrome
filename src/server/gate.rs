@@ -1,6 +1,6 @@
 //! A [Gate] is the main entrance to your [rocket]. It provides methods for access control, as well
 //! as login and logout.
-use crate::{
+use super::{
     auth_type::{
         AuthType,
         Bearer,
@@ -12,8 +12,8 @@ use crate::{
     },
     passport_register::PassportRegister,
     storage::BoardingPassStorage,
-    Ticket,
 };
+use crate::Ticket;
 use anyhow::anyhow;
 
 /// A [Gate] is able to verify, grant and deny access to a [rocket].

@@ -1,5 +1,5 @@
 //! Different data types that can be used as payload in a [BoardingPass](super::BoardingPass).
-use crate::passport::Passport;
+use super::super::passport::Passport;
 use chrono::{
     TimeDelta,
     Utc,
