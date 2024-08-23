@@ -26,12 +26,10 @@
         devShell = pkgs.mkShell {
           name = "cosmodrome development";
           buildInputs = [
-            pkgs.nushell
             pkgs.pkg-config
             pkgs.openssl
           ] ++ system_pkgs.${system};
           shellHook = ''
-            export RUSTUP_TOOLCHAIN=nightly
             zellij --layout layout.kdl
             exit
           '';
