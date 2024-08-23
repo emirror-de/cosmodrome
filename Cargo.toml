@@ -1,6 +1,6 @@
 [package]
 name = "cosmodrome"
-version = "0.2.0-dev"
+version = "0.2.0"
 authors = ["Lewin Probst <info@emirror.de>"]
 edition = "2021"
 description = "Access control for your rocket application."
