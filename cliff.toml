@@ -44,6 +44,3 @@ filter_commits = false
 ignore_tags = ""
 topo_order = false
 sort_commits = "oldest"
-link_parsers = [
-    { pattern = "#(\\d+)", href = "https://git.emirror.de/emirror-de/solarscan/issues/$1"},
-]
