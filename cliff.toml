@@ -37,6 +37,7 @@ commit_parsers = [
     { message = "^refactor", group = "🏗  Refactor", default_scope = "global changes"},
     { message = "^style", group = "Styling", default_scope = "global changes"},
     { message = "^test", group = "⚒ Testing", default_scope = "global changes"},
+    { message = "^version", group = "☯ Version specifics", default_scope = "global changes"},
 ]
 protect_breaking_commits = false
 filter_commits = false
