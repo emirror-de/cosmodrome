@@ -9,7 +9,5 @@ pub(crate) mod server;
 #[doc(cfg(feature = "server"))]
 pub use server::*;
 
-#[cfg(feature = "client")]
-#[doc(cfg(feature = "client"))]
 mod ticket;
 pub use ticket::Ticket;
