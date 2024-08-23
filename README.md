@@ -41,7 +41,7 @@ Both methods are using `JWT` as payload.
 
 ## Examples
 
-Examples are provided in the `examples` folder in the repository.
+Examples are provided in the [`examples`](https://github.com/emirror-de/cosmodrome/tree/unstable/examples) folder in the repository.
 
 ## Attributions
 
