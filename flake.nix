@@ -1,9 +1,11 @@
 {
-  description = "rocket-airport development";
+  description = "cosmodrome development";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    flake-utils = { url = "github:numtide/flake-utils"; };
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+    };
   };
 
   outputs = { self, nixpkgs, flake-utils }:
