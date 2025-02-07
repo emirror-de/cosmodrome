@@ -32,8 +32,6 @@
             pkgs.openssl
           ] ++ system_pkgs.${system};
           shellHook = ''
-            zellij --layout layout.kdl
-            exit
           '';
         };
       });
