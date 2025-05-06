@@ -1,4 +1,30 @@
 # Changelog
+## v0.2.1
+Release date: *2025-05-06*
+
+### Global changes
+
+#### ☯ Version specifics
+
+- Bumped version to 0.2.1 [9eae60b]
+
+#### 📄 Documentation
+
+- Added link to examples folder [8c6990e]
+- Updated html logo and favicon [97dd8f3]
+
+#### 🚲 Miscellaneous Tasks
+
+- Updated keyword access control [a32fabb]
+- Removed wrong link parsers definition in cliff config [378f5be]
+- Updated flake.nix [ba33be9]
+- Removed zellij from shellHook [3feabb1]
+
+#### 🛳  Features
+
+- Added github workflows for build, test and audit [1c02302]
+- Can now compile with rust stable [f31a652]
+
 ## v0.2.0
 Release date: *2024-08-23*
 
@@ -38,6 +64,7 @@ Release date: *2024-08-23*
 - Added attribution to logo creator [41843fc]
 - Updated introduction and purpose section in README.md [c78d307]
 - Updated README.md [4166204]
+- Added CHANGELOG.md [2dc35b8]
 
 #### 🚲 Miscellaneous Tasks
 
@@ -62,6 +89,7 @@ Release date: *2024-08-23*
 - Now requiring nightly toolchain because of doc_cfg [4fbb21b]
 - Removed client feature requirement for Ticket [0c235d7]
 - Removed nushell from flake as well as RUSTUP_TOOLCHAIN env in shellHook [01a5c98]
+- Added version group to cliff.toml [0b8fa91]
 
 #### 🛳  Features
 
